@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Tracking Log</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --border: #334155;
+      --shadow: 0 10px 25px rgba(0,0,0,0.25);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    .app {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .hidden { display: none !important; }
+
+    .card {
+      background: rgba(17,24,39,0.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .auth-wrap {
+      min-height: calc(100vh - 40px);
+      display: grid;
+      place-items: center;
+    }
+
+    .auth-grid {
+      width: 100%;
+      max-width: 1050px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    .hero, .auth-panel {
+      padding: 26px;
+    }
+
+    .hero h1, .auth-panel h2, .main-title {
+      margin-top: 0;
+    }
+
+    .hero p, .muted, .subtle {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .feature-item {
+      background: rgba(30,41,59,0.75);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn, .btn, .month-tab {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .tab-btn:hover, .btn:hover, .month-tab:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+
+    .tab-btn.active, .month-tab.active, .btn.primary {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border-color: #38bdf8;
+    }
+
+    .btn.success {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      border-color: #22c55e;
+    }
+
+    .btn.danger {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      border-color: #ef4444;
+    }
+
+    .btn.warn {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border-color: #f59e0b;
+    }
+
+    .btn.ghost {
+      background: transparent;
+    }
+
+    .stack { display: grid; gap: 12px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .row.between { justify-content: space-between; }
+    .row.end { justify-content: flex-end; }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      color: var(--text);
+      outline: none;
+    }
+
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .auth-profiles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .profile-chip {
+      background: #0b1220;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .profile-chip.active {
+      border-color: var(--accent);
+      background: rgba(14,165,233,0.14);
+    }
+
+    .header {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 18px 20px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(700px, 1fr) 420px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .months-bar {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 6px 2px 10px;
+      margin-bottom: 12px;
+      scrollbar-width: thin;
+    }
+
+    .calendar-card {
+      padding: 18px;
+    }
+
+    .calendar-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .weekday {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      padding-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .day-cell {
+      min-height: 108px;
+      background: rgba(15,23,42,0.78);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px;
+      cursor: pointer;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+      transition: 0.18s ease;
+    }
+
+    .day-cell:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .day-cell.selected {
+      outline: 2px solid var(--accent);
+      background: rgba(14,165,233,0.12);
+    }
+
+    .day-cell.empty {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .day-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .day-number {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .count-badge {
+      min-width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      display: inline-grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(34,197,94,0.15);
+      color: #86efac;
+      border: 1px solid rgba(34,197,94,0.4);
+    }
+
+    .day-preview {
+      display: grid;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .side-panel {
+      padding: 18px;
+      position: sticky;
+      top: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .selected-date {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .post-list {
+      display: grid;
+      gap: 12px;
+      max-height: 580px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .post-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(15,23,42,0.8);
+      display: grid;
+      gap: 10px;
+    }
+
+    .post-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(51,65,85,0.45);
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .post-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      color: var(--muted);
+      padding: 10px 0;
+      line-height: 1.5;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2,6,23,0.68);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    .modal {
+      width: min(920px, 100%);
+      max-height: 90vh;
+      overflow: auto;
+      padding: 22px;
+    }
+
+    .modal h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .history-entry, .import-item, .trash-item {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(15,23,42,0.72);
+      display: grid;
+      gap: 8px;
+    }
+
+    .import-scroll, .trash-scroll {
+      max-height: 360px;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      padding-right: 4px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.75);
+      min-width: 120px;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 3px;
+    }
+
+    .danger-text { color: #fca5a5; }
+    .success-text { color: #86efac; }
+    .accent-text { color: #7dd3fc; }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1180px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .side-panel { position: static; }
+    }
+
+    @media (max-width: 900px) {
+      .auth-grid, .two-col { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: 1fr; }
+      .toolbar { justify-content: flex-start; }
+      .calendar-grid { gap: 6px; }
+      .day-cell { min-height: 90px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="authView" class="auth-wrap">
+      <div class="auth-grid">
+        <div class="card hero">
+          <h1>Control Tracking Log</h1>
+          <p>Single-file control tracking app built for GitHub Pages. Create a profile, sign in with a 4-digit PIN, manage calendar-based control logs, export data to a shareable JSON file, and import updates with overwrite review before replacing data.</p>
+          <div class="feature-list">
+            <div class="feature-item"><b>Monthly tabs</b><div class="subtle">From last month through December 2030</div></div>
+            <div class="feature-item"><b>Calendar posting</b><div class="subtle">Pick a day first, then create a log entry</div></div>
+            <div class="feature-item"><b>Edit history</b><div class="subtle">Track creator, editor, and timestamps</div></div>
+            <div class="feature-item"><b>Soft delete</b><div class="subtle">Restore or permanently purge deleted posts</div></div>
+            <div class="feature-item"><b>Export!!!</b><div class="subtle">Save the full log to a JSON file</div></div>
+            <div class="feature-item"><b>Import!!!</b><div class="subtle">Review incoming data before replacing current data</div></div>
+          </div>
+          <div class="footer-note">Security note: hashed 4-digit PINs reduce casual exposure, but 4-digit PINs are not strong security if someone gains access to the exported file.</div>
+        </div>
+
+        <div class="card auth-panel">
+          <div class="tabs">
+            <button class="tab-btn active" data-auth-tab="signin">Sign In</button>
+            <button class="tab-btn" data-auth-tab="signup">New User</button>
+          </div>
+
+          <div id="signinTab" class="stack">
+            <h2>Sign In</h2>
+            <div class="field">
+              <label>Select Profile</label>
+              <div id="profileList" class="auth-profiles"></div>
+            </div>
+            <div class="field">
+              <label for="signinPin">4-Digit PIN</label>
+              <input id="signinPin" type="password" maxlength="4" inputmode="numeric" placeholder="Enter PIN" />
+            </div>
+            <div class="row end">
+              <button id="signinBtn" class="btn primary">Sign In</button>
+            </div>
+            <div class="footer-note">If no profiles exist yet, create one using the New User tab.</div>
+          </div>
+
+          <div id="signupTab" class="stack hidden">
+            <h2>Create New User</h2>
+            <div class="field">
+              <label for="newUserName">Profile Name</label>
+              <input id="newUserName" type="text" placeholder="Enter profile name" maxlength="50" />
+            </div>
+            <div class="two-col">
+              <div class="field">
+                <label for="newUserPin">4-Digit PIN</label>
+                <input id="newUserPin" type="password" maxlength="4" inputmode="numeric" placeholder="4 digits" />
+              </div>
+              <div class="field">
+                <label for="confirmUserPin">Confirm PIN</label>
+                <input id="confirmUserPin" type="password" maxlength="4" inputmode="numeric" placeholder="Repeat PIN" />
+              </div>
+            </div>
+            <div class="row end">
+              <button id="createUserBtn" class="btn success">Create User</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="appView" class="hidden">
+      <div class="header">
+        <div class="card topbar">
+          <div>
+            <h1 class="main-title">Control Tracking Log</h1>
+            <div class="muted">Signed in as <b id="currentUserLabel"></b></div>
+          </div>
+          <div class="toolbar">
+            <button id="exportBtn" class="btn success">Export!!!</button>
+            <button id="importBtn" class="btn warn">Import!!!</button>
+            <button id="trashBtn" class="btn">Deleted Posts</button>
+            <button id="manageUsersBtn" class="btn">Users</button>
+            <button id="signOutBtn" class="btn ghost">Sign Out</button>
+            <input id="importFileInput" type="file" accept="application/json" class="hidden" />
+          </div>
+        </div>
+      </div>
+
+      <div class="months-bar card" id="monthsBar" style="padding: 12px;"></div>
+
+      <div class="main-grid">
+        <div class="card calendar-card">
+          <div class="calendar-head">
+            <div>
+              <h2 id="calendarTitle" style="margin:0;"></h2>
+              <div class="muted">Select a day to view or create posts.</div>
+            </div>
+            <div class="stats">
+              <div class="stat"><b id="monthPostsCount">0</b><span class="muted">Active Posts</span></div>
+              <div class="stat"><b id="monthDeletedCount">0</b><span class="muted">Deleted Posts</span></div>
+            </div>
+          </div>
+
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <div class="card side-panel">
+          <div>
+            <div class="selected-date" id="selectedDateLabel">No day selected</div>
+            <div class="muted">Pick a day on the calendar to manage entries.</div>
+          </div>
+
+          <div class="row between">
+            <h3 style="margin:0;">Posts</h3>
+            <button id="newPostBtn" class="btn primary">New Post</button>
+          </div>
+
+          <div id="selectedDayStats" class="muted">No day selected.</div>
+          <div id="postList" class="post-list"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="postModalBackdrop" class="modal-backdrop">
+    <div class="card modal">
+      <div class="row between">
+        <h3 id="postModalTitle">New Post</h3>
+        <button class="btn ghost" data-close="postModalBackdrop">Close</button>
+      </div>
+      <div class="muted" id="postModalDateLabel"></div>
+      <div class="stack" style="margin-top:14px;">
+        <div class="two-col">
+          <div class="field">
+            <label for="crewNameInput">Crew Name</label>
+            <input id="crewNameInput" type="text" maxlength="100" />
+          </div>
+          <div class="field">
+            <label for="subdivisionInput">Subdivision</label>
+            <input id="subdivisionInput" type="text" maxlength="120" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="controlTypeInput">Control Type</label>
+          <select id="controlTypeInput">
+            <option value="Full day of control">Full day of control</option>
+            <option value="Partial day of control">Partial day of control</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="commentsInput">Comments/Notes (Optional)</label>
+          <textarea id="commentsInput" rows="5" placeholder="Optional comments or notes"></textarea>
+        </div>
+      </div>
+      <div class="row end" style="margin-top:18px;">
+        <button class="btn ghost" data-close="postModalBackdrop">Cancel</button>
+        <button id="savePostBtn" class="btn primary">Save Post</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="historyModalBackdrop" class="modal-backdrop">
+    <div class="card modal">
+      <div class="row between">
+        <h3>Post History</h3>
+        <button class="btn ghost" data-close="historyModalBackdrop">Close</button>
+      </div>
+      <div id="historyContent" class="stack"></div>
+    </div>
+  </div>
+
+  <div id="trashModalBackdrop" class="modal-backdrop">
+    <div class="card modal">
+      <div class="row between">
+        <div>
+          <h3 style="margin-bottom:4px;">Deleted Posts</h3>
+          <div class="muted">Restore deleted posts or permanently remove them.</div>
+        </div>
+        <button class="btn ghost" data-close="trashModalBackdrop">Close</button>
+      </div>
+      <div id="trashContent" class="trash-scroll" style="margin-top:14px;"></div>
+      <div class="row end" style="margin-top:18px;">
+        <button id="purgeAllDeletedBtn" class="btn danger">Purge All Deleted</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="importModalBackdrop" class="modal-backdrop">
+    <div class="card modal">
+      <div class="row between">
+        <div>
+          <h3 style="margin-bottom:4px;">Import Review</h3>
+          <div class="muted">Review incoming data before replacing your current data.</div>
+        </div>
+        <button class="btn ghost" data-close="importModalBackdrop">Close</button>
+      </div>
+
+      <div id="importSummary" class="stack" style="margin-top:14px;"></div>
+
+      <div style="margin-top:16px;">
+        <h4 style="margin:0 0 10px 0;">Incoming posts to keep or trash before import</h4>
+        <div id="importItems" class="import-scroll"></div>
+      </div>
+
+      <div class="row" style="margin-top:16px; align-items:flex-start;">
+        <input id="overwriteConfirmCheck" type="checkbox" style="margin-top:4px;" />
+        <label for="overwriteConfirmCheck" class="muted">I understand this import will replace my current data with the selected incoming data.</label>
+      </div>
+
+      <div class="row end" style="margin-top:18px;">
+        <button class="btn ghost" data-close="importModalBackdrop">Cancel</button>
+        <button id="confirmImportBtn" class="btn warn">Replace Current Data</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="usersModalBackdrop" class="modal-backdrop">
+    <div class="card modal">
+      <div class="row between">
+        <div>
+          <h3 style="margin-bottom:4px;">Users</h3>
+          <div class="muted">Manage profiles stored inside this app data file.</div>
+        </div>
+        <button class="btn ghost" data-close="usersModalBackdrop">Close</button>
+      </div>
+      <div id="usersContent" class="stack" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'control-tracking-log-app-v1';
+    const APP_VERSION = '1.0.0';
+
+    const state = {
+      data: null,
+      currentUserId: null,
+      selectedProfileId: null,
+      authTab: 'signin',
+      selectedMonthKey: null,
+      selectedDate: null,
+      editingPostId: null,
+      importPayload: null,
+    };
+
+    const els = {};
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      cacheEls();
+      bindEvents();
+      await initializeApp();
+    });
+
+    function cacheEls() {
+      const ids = [
+        'authView','appView','profileList','signinPin','signinBtn','newUserName','newUserPin','confirmUserPin','createUserBtn',
+        'currentUserLabel','monthsBar','calendarTitle','calendarGrid','monthPostsCount','monthDeletedCount','selectedDateLabel',
+        'selectedDayStats','postList','newPostBtn','exportBtn','importBtn','trashBtn','manageUsersBtn','signOutBtn','importFileInput',
+        'postModalBackdrop','postModalTitle','postModalDateLabel','crewNameInput','subdivisionInput','controlTypeInput','commentsInput','savePostBtn',
+        'historyModalBackdrop','historyContent','trashModalBackdrop','trashContent','purgeAllDeletedBtn','importModalBackdrop','importSummary',
+        'importItems','overwriteConfirmCheck','confirmImportBtn','usersModalBackdrop','usersContent','signinTab','signupTab'
+      ];
+      ids.forEach(id => els[id] = document.getElementById(id));
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('[data-auth-tab]').forEach(btn => {
+        btn.addEventListener('click', () => switchAuthTab(btn.dataset.authTab));
+      });
+
+      els.signinBtn.addEventListener('click', signIn);
+      els.createUserBtn.addEventListener('click', createUser);
+      els.signOutBtn.addEventListener('click', signOut);
+      els.newPostBtn.addEventListener('click', openNewPostModal);
+      els.savePostBtn.addEventListener('click', savePost);
+      els.exportBtn.addEventListener('click', exportData);
+      els.importBtn.addEventListener('click', () => els.importFileInput.click());
+      els.importFileInput.addEventListener('change', handleImportFileSelected);
+      els.confirmImportBtn.addEventListener('click', confirmImport);
+      els.trashBtn.addEventListener('click', openTrashModal);
+      els.purgeAllDeletedBtn.addEventListener('click', purgeAllDeleted);
+      els.manageUsersBtn.addEventListener('click', openUsersModal);
+
+      document.querySelectorAll('[data-close]').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.dataset.close));
+      });
+    }
+
+    async function initializeApp() {
+      state.data = loadData();
+      ensureDataShape(state.data);
+      if (!state.data.meta.monthKeys || state.data.meta.monthKeys.length === 0) {
+        state.data.meta.monthKeys = buildMonthKeys();
+      }
+      if (!state.selectedMonthKey) state.selectedMonthKey = getDefaultMonthKey();
+      persistData();
+      renderAuth();
+      renderApp();
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (error) {
+        console.error('Failed to load saved data', error);
+      }
+      return createEmptyData();
+    }
+
+    function createEmptyData() {
+      return {
+        version: APP_VERSION,
+        exportedAt: null,
+        meta: {
+          monthKeys: buildMonthKeys(),
+        },
+        users: [],
+        posts: [],
+      };
+    }
+
+    function ensureDataShape(data) {
+      data.version = data.version || APP_VERSION;
+      data.meta = data.meta || {};
+      data.meta.monthKeys = Array.isArray(data.meta.monthKeys) ? data.meta.monthKeys : buildMonthKeys();
+      data.users = Array.isArray(data.users) ? data.users : [];
+      data.posts = Array.isArray(data.posts) ? data.posts : [];
+      data.posts.forEach(post => {
+        post.history = Array.isArray(post.history) ? post.history : [];
+        post.deleted = !!post.deleted;
+      });
+    }
+
+    function persistData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+    }
+
+    function switchAuthTab(tab) {
+      state.authTab = tab;
+      document.querySelectorAll('[data-auth-tab]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.authTab === tab);
+      });
+      els.signinTab.classList.toggle('hidden', tab !== 'signin');
+      els.signupTab.classList.toggle('hidden', tab !== 'signup');
+    }
+
+    function renderAuth() {
+      renderProfileList();
+      switchAuthTab(state.authTab);
+    }
+
+    function renderProfileList() {
+      els.profileList.innerHTML = '';
+      if (state.data.users.length === 0) {
+        els.profileList.innerHTML = '<div class="muted">No profiles yet.</div>';
+        return;
+      }
+
+      state.data.users
+        .slice()
+        .sort((a,b) => a.name.localeCompare(b.name))
+        .forEach(user => {
+          const btn = document.createElement('button');
+          btn.className = 'profile-chip' + (state.selectedProfileId === user.id ? ' active' : '');
+          btn.textContent = user.name;
+          btn.addEventListener('click', () => {
+            state.selectedProfileId = user.id;
+            renderProfileList();
+          });
+          els.profileList.appendChild(btn);
+        });
+    }
+
+    async function createUser() {
+      const name = els.newUserName.value.trim();
+      const pin = els.newUserPin.value.trim();
+      const confirm = els.confirmUserPin.value.trim();
+
+      if (!name) return alert('Enter a profile name.');
+      if (!/^\d{4}$/.test(pin)) return alert('PIN must be exactly 4 digits.');
+      if (pin !== confirm) return alert('PIN confirmation does not match.');
+      if (state.data.users.some(u => u.name.toLowerCase() === name.toLowerCase())) {
+        return alert('A profile with that name already exists.');
+      }
+
+      const salt = generateId();
+      const pinHash = await hashPin(pin, salt);
+      const user = {
+        id: generateId(),
+        name,
+        pinSalt: salt,
+        pinHash,
+        createdAt: nowIso(),
+      };
+
+      state.data.users.push(user);
+      persistData();
+      els.newUserName.value = '';
+      els.newUserPin.value = '';
+      els.confirmUserPin.value = '';
+      state.selectedProfileId = user.id;
+      switchAuthTab('signin');
+      renderAuth();
+      alert('User created. Select the profile and sign in.');
+    }
+
+    async function signIn() {
+      const profileId = state.selectedProfileId;
+      const pin = els.signinPin.value.trim();
+      if (!profileId) return alert('Select a profile first.');
+      if (!/^\d{4}$/.test(pin)) return alert('Enter the 4-digit PIN.');
+
+      const user = state.data.users.find(u => u.id === profileId);
+      if (!user) return alert('Selected profile was not found.');
+
+      const attemptedHash = await hashPin(pin, user.pinSalt);
+      if (attemptedHash !== user.pinHash) return alert('Incorrect PIN.');
+
+      state.currentUserId = user.id;
+      els.signinPin.value = '';
+      state.selectedMonthKey = state.selectedMonthKey || getDefaultMonthKey();
+      if (!state.selectedDate) state.selectedDate = getFirstDayOfMonth(state.selectedMonthKey);
+      renderApp();
+    }
+
+    function signOut() {
+      state.currentUserId = null;
+      state.editingPostId = null;
+      closeAllModals();
+      renderApp();
+    }
+
+    function renderApp() {
+      const signedIn = !!state.currentUserId;
+      els.authView.classList.toggle('hidden', signedIn);
+      els.appView.classList.toggle('hidden', !signedIn);
+
+      if (!signedIn) {
+        renderAuth();
+        return;
+      }
+
+      const currentUser = getCurrentUser();
+      els.currentUserLabel.textContent = currentUser?.name || 'Unknown User';
+
+      if (!state.data.meta.monthKeys.includes(state.selectedMonthKey)) {
+        state.selectedMonthKey = getDefaultMonthKey();
+      }
+
+      if (!state.selectedDate || !state.selectedDate.startsWith(state.selectedMonthKey)) {
+        state.selectedDate = getFirstDayOfMonth(state.selectedMonthKey);
+      }
+
+      renderMonthsBar();
+      renderCalendar();
+      renderSelectedDayPanel();
+    }
+
+    function renderMonthsBar() {
+      els.monthsBar.innerHTML = '';
+      state.data.meta.monthKeys.forEach(monthKey => {
+        const btn = document.createElement('button');
+        btn.className = 'month-tab' + (monthKey === state.selectedMonthKey ? ' active' : '');
+        btn.textContent = formatMonthKey(monthKey);
+        btn.addEventListener('click', () => {
+          state.selectedMonthKey = monthKey;
+          state.selectedDate = getFirstDayOfMonth(monthKey);
+          renderApp();
+        });
+        els.monthsBar.appendChild(btn);
+      });
+    }
+
+    function renderCalendar() {
+      els.calendarTitle.textContent = formatMonthKey(state.selectedMonthKey);
+      els.calendarGrid.innerHTML = '';
+
+      const weekdayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      weekdayNames.forEach(day => {
+        const cell = document.createElement('div');
+        cell.className = 'weekday';
+        cell.textContent = day;
+        els.calendarGrid.appendChild(cell);
+      });
+
+      const [year, month] = state.selectedMonthKey.split('-').map(Number);
+      const first = new Date(year, month - 1, 1);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const offset = first.getDay();
+
+      for (let i = 0; i < offset; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'day-cell empty';
+        els.calendarGrid.appendChild(empty);
+      }
+
+      let monthActiveCount = 0;
+      let monthDeletedCount = 0;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = `${state.selectedMonthKey}-${String(day).padStart(2,'0')}`;
+        const posts = getPostsByDate(dateKey);
+        const activePosts = posts.filter(p => !p.deleted);
+        const deletedPosts = posts.filter(p => p.deleted);
+        monthActiveCount += activePosts.length;
+        monthDeletedCount += deletedPosts.length;
+
+        const cell = document.createElement('div');
+        cell.className = 'day-cell' + (state.selectedDate === dateKey ? ' selected' : '');
+        cell.addEventListener('click', () => {
+          state.selectedDate = dateKey;
+          renderSelectedDayPanel();
+          renderCalendar();
+        });
+
+        const previews = activePosts.slice(0, 2).map(p => `${p.crewName} · ${p.controlType.startsWith('Full') ? 'Full' : 'Partial'}`);
+        cell.innerHTML = `
+          <div class="day-top">
+            <div class="day-number">${day}</div>
+            ${activePosts.length ? `<div class="count-badge">${activePosts.length}</div>` : ''}
+          </div>
+          <div class="day-preview">
+            ${previews.map(text => `<div>${escapeHtml(text)}</div>`).join('')}
+            ${activePosts.length > 2 ? `<div>+${activePosts.length - 2} more</div>` : ''}
+            ${deletedPosts.length ? `<div class="danger-text">${deletedPosts.length} deleted</div>` : ''}
+          </div>
+        `;
+        els.calendarGrid.appendChild(cell);
+      }
+
+      els.monthPostsCount.textContent = String(monthActiveCount);
+      els.monthDeletedCount.textContent = String(monthDeletedCount);
+    }
+
+    function renderSelectedDayPanel() {
+      if (!state.selectedDate) {
+        els.selectedDateLabel.textContent = 'No day selected';
+        els.selectedDayStats.textContent = 'No day selected.';
+        els.postList.innerHTML = '<div class="empty-state">Select a day to view or create posts.</div>';
+        return;
+      }
+
+      els.selectedDateLabel.textContent = formatFullDate(state.selectedDate);
+      const posts = getPostsByDate(state.selectedDate)
+        .filter(post => !post.deleted)
+        .sort((a,b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+      const deletedCount = getPostsByDate(state.selectedDate).filter(p => p.deleted).length;
+      els.selectedDayStats.innerHTML = `${posts.length} active post(s)${deletedCount ? ` · <span class="danger-text">${deletedCount} deleted</span>` : ''}`;
+
+      if (posts.length === 0) {
+        els.postList.innerHTML = '<div class="empty-state">No active posts for this day yet. Click <b>New Post</b> to create one.</div>';
+        return;
+      }
+
+      els.postList.innerHTML = '';
+      posts.forEach(post => {
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        const editedMeta = post.updatedAt && post.updatedAt !== post.createdAt
+          ? `<div>Last edited by <b>${escapeHtml(post.lastEditedByName || 'Unknown')}</b> on ${formatDateTime(post.updatedAt)}</div>`
+          : '';
+        card.innerHTML = `
+          <div class="post-title">
+            <div>
+              <div><b>${escapeHtml(post.crewName)}</b> · ${escapeHtml(post.subdivision)}</div>
+              <div class="meta">
+                <div>Posted by <b>${escapeHtml(post.createdByName || 'Unknown')}</b> on ${formatDateTime(post.createdAt)}</div>
+                ${editedMeta}
+              </div>
+            </div>
+            <span class="pill">${escapeHtml(post.controlType)}</span>
+          </div>
+          ${post.commentsNotes ? `<div>${escapeHtml(post.commentsNotes).replace(/\n/g,'<br>')}</div>` : '<div class="muted">No comments/notes.</div>'}
+          <div class="post-actions">
+            <button class="btn" data-action="history" data-id="${post.id}">View History</button>
+            <button class="btn" data-action="edit" data-id="${post.id}">Edit</button>
+            <button class="btn danger" data-action="delete" data-id="${post.id}">Delete</button>
+          </div>
+        `;
+        card.querySelectorAll('[data-action]').forEach(btn => {
+          const action = btn.dataset.action;
+          const postId = btn.dataset.id;
+          if (action === 'history') btn.addEventListener('click', () => openHistoryModal(postId));
+          if (action === 'edit') btn.addEventListener('click', () => openEditPostModal(postId));
+          if (action === 'delete') btn.addEventListener('click', () => softDeletePost(postId));
+        });
+        els.postList.appendChild(card);
+      });
+    }
+
+    function openNewPostModal() {
+      if (!state.selectedDate) return alert('Select a calendar day first.');
+      state.editingPostId = null;
+      els.postModalTitle.textContent = 'New Post';
+      els.postModalDateLabel.textContent = formatFullDate(state.selectedDate);
+      els.crewNameInput.value = '';
+      els.subdivisionInput.value = '';
+      els.controlTypeInput.value = 'Full day of control';
+      els.commentsInput.value = '';
+      openModal('postModalBackdrop');
+    }
+
+    function openEditPostModal(postId) {
+      const post = state.data.posts.find(p => p.id === postId);
+      if (!post) return alert('Post not found.');
+      state.editingPostId = postId;
+      state.selectedDate = post.dateKey;
+      els.postModalTitle.textContent = 'Edit Post';
+      els.postModalDateLabel.textContent = formatFullDate(post.dateKey);
+      els.crewNameInput.value = post.crewName || '';
+      els.subdivisionInput.value = post.subdivision || '';
+      els.controlTypeInput.value = post.controlType || 'Full day of control';
+      els.commentsInput.value = post.commentsNotes || '';
+      openModal('postModalBackdrop');
+    }
+
+    function savePost() {
+      const crewName = els.crewNameInput.value.trim();
+      const subdivision = els.subdivisionInput.value.trim();
+      const controlType = els.controlTypeInput.value;
+      const commentsNotes = els.commentsInput.value.trim();
+      const currentUser = getCurrentUser();
+
+      if (!state.selectedDate) return alert('Select a date first.');
+      if (!crewName) return alert('Crew name is required.');
+      if (!subdivision) return alert('Subdivision is required.');
+      if (!currentUser) return alert('You must be signed in to save a post.');
+
+      if (state.editingPostId) {
+        const post = state.data.posts.find(p => p.id === state.editingPostId);
+        if (!post) return alert('Post not found.');
+
+        post.history.push({
+          revisionId: generateId(),
+          action: 'edited',
+          changedAt: nowIso(),
+          changedByUserId: currentUser.id,
+          changedByName: currentUser.name,
+          snapshot: buildPostSnapshot(post),
+        });
+
+        post.crewName = crewName;
+        post.subdivision = subdivision;
+        post.controlType = controlType;
+        post.commentsNotes = commentsNotes;
+        post.lastEditedByUserId = currentUser.id;
+        post.lastEditedByName = currentUser.name;
+        post.updatedAt = nowIso();
+      } else {
+        const createdAt = nowIso();
+        const post = {
+          id: generateId(),
+          dateKey: state.selectedDate,
+          crewName,
+          subdivision,
+          controlType,
+          commentsNotes,
+          createdAt,
+          updatedAt: createdAt,
+          createdByUserId: currentUser.id,
+          createdByName: currentUser.name,
+          lastEditedByUserId: currentUser.id,
+          lastEditedByName: currentUser.name,
+          deleted: false,
+          deletedAt: null,
+          deletedByUserId: null,
+          deletedByName: null,
+          history: [
+            {
+              revisionId: generateId(),
+              action: 'created',
+              changedAt: createdAt,
+              changedByUserId: currentUser.id,
+              changedByName: currentUser.name,
+              snapshot: {
+                crewName,
+                subdivision,
+                controlType,
+                commentsNotes,
+                dateKey: state.selectedDate,
+              },
+            }
+          ],
+        };
+        state.data.posts.push(post);
+      }
+
+      persistData();
+      closeModal('postModalBackdrop');
+      renderApp();
+    }
+
+    function buildPostSnapshot(post) {
+      return {
+        dateKey: post.dateKey,
+        crewName: post.crewName,
+        subdivision: post.subdivision,
+        controlType: post.controlType,
+        commentsNotes: post.commentsNotes,
+      };
+    }
+
+    function softDeletePost(postId) {
+      const currentUser = getCurrentUser();
+      const post = state.data.posts.find(p => p.id === postId);
+      if (!post) return alert('Post not found.');
+      if (!confirm('Soft delete this post? You can restore it later from Deleted Posts.')) return;
+
+      post.history.push({
+        revisionId: generateId(),
+        action: 'deleted',
+        changedAt: nowIso(),
+        changedByUserId: currentUser?.id || null,
+        changedByName: currentUser?.name || 'Unknown',
+        snapshot: buildPostSnapshot(post),
+      });
+      post.deleted = true;
+      post.deletedAt = nowIso();
+      post.deletedByUserId = currentUser?.id || null;
+      post.deletedByName = currentUser?.name || 'Unknown';
+      post.updatedAt = nowIso();
+      persistData();
+      renderApp();
+    }
+
+    function openHistoryModal(postId) {
+      const post = state.data.posts.find(p => p.id === postId);
+      if (!post) return alert('Post not found.');
+
+      const sortedHistory = [...post.history].sort((a,b) => new Date(b.changedAt) - new Date(a.changedAt));
+      els.historyContent.innerHTML = `
+        <div class="history-entry">
+          <div><b>Current Post</b></div>
+          <div class="meta">Date: ${formatFullDate(post.dateKey)}</div>
+          <div class="meta">Crew Name: ${escapeHtml(post.crewName)}</div>
+          <div class="meta">Subdivision: ${escapeHtml(post.subdivision)}</div>
+          <div class="meta">Control Type: ${escapeHtml(post.controlType)}</div>
+          <div>${post.commentsNotes ? escapeHtml(post.commentsNotes).replace(/\n/g,'<br>') : '<span class="muted">No comments/notes.</span>'}</div>
+        </div>
+      `;
+
+      sortedHistory.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'history-entry';
+        item.innerHTML = `
+          <div><b>${escapeHtml(capitalize(entry.action))}</b> by ${escapeHtml(entry.changedByName || 'Unknown')}</div>
+          <div class="meta">${formatDateTime(entry.changedAt)}</div>
+          <div class="meta">Date: ${formatFullDate(entry.snapshot.dateKey || post.dateKey)}</div>
+          <div class="meta">Crew Name: ${escapeHtml(entry.snapshot.crewName || '')}</div>
+          <div class="meta">Subdivision: ${escapeHtml(entry.snapshot.subdivision || '')}</div>
+          <div class="meta">Control Type: ${escapeHtml(entry.snapshot.controlType || '')}</div>
+          <div>${entry.snapshot.commentsNotes ? escapeHtml(entry.snapshot.commentsNotes).replace(/\n/g,'<br>') : '<span class="muted">No comments/notes.</span>'}</div>
+        `;
+        els.historyContent.appendChild(item);
+      });
+
+      openModal('historyModalBackdrop');
+    }
+
+    function openTrashModal() {
+      const deletedPosts = state.data.posts
+        .filter(p => p.deleted)
+        .sort((a,b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
+
+      if (deletedPosts.length === 0) {
+        els.trashContent.innerHTML = '<div class="empty-state">There are no deleted posts.</div>';
+      } else {
+        els.trashContent.innerHTML = '';
+        deletedPosts.forEach(post => {
+          const item = document.createElement('div');
+          item.className = 'trash-item';
+          item.innerHTML = `
+            <div><b>${escapeHtml(post.crewName)}</b> · ${escapeHtml(post.subdivision)}</div>
+            <div class="meta">${formatFullDate(post.dateKey)}</div>
+            <div class="meta">Deleted by <b>${escapeHtml(post.deletedByName || 'Unknown')}</b> on ${formatDateTime(post.deletedAt)}</div>
+            <div>${post.commentsNotes ? escapeHtml(post.commentsNotes).replace(/\n/g,'<br>') : '<span class="muted">No comments/notes.</span>'}</div>
+            <div class="post-actions">
+              <button class="btn success" data-trash-action="restore" data-id="${post.id}">Restore</button>
+              <button class="btn danger" data-trash-action="purge" data-id="${post.id}">Purge</button>
+            </div>
+          `;
+          item.querySelector('[data-trash-action="restore"]').addEventListener('click', () => restoreDeletedPost(post.id));
+          item.querySelector('[data-trash-action="purge"]').addEventListener('click', () => purgeDeletedPost(post.id));
+          els.trashContent.appendChild(item);
+        });
+      }
+      openModal('trashModalBackdrop');
+    }
+
+    function restoreDeletedPost(postId) {
+      const currentUser = getCurrentUser();
+      const post = state.data.posts.find(p => p.id === postId);
+      if (!post) return alert('Post not found.');
+      post.history.push({
+        revisionId: generateId(),
+        action: 'restored',
+        changedAt: nowIso(),
+        changedByUserId: currentUser?.id || null,
+        changedByName: currentUser?.name || 'Unknown',
+        snapshot: buildPostSnapshot(post),
+      });
+      post.deleted = false;
+      post.deletedAt = null;
+      post.deletedByUserId = null;
+      post.deletedByName = null;
+      post.lastEditedByUserId = currentUser?.id || null;
+      post.lastEditedByName = currentUser?.name || 'Unknown';
+      post.updatedAt = nowIso();
+      persistData();
+      openTrashModal();
+      renderApp();
+    }
+
+    function purgeDeletedPost(postId) {
+      const post = state.data.posts.find(p => p.id === postId);
+      if (!post) return alert('Post not found.');
+      if (!confirm('Permanently purge this deleted post? This cannot be undone.')) return;
+      state.data.posts = state.data.posts.filter(p => p.id !== postId);
+      persistData();
+      openTrashModal();
+      renderApp();
+    }
+
+    function purgeAllDeleted() {
+      const count = state.data.posts.filter(p => p.deleted).length;
+      if (!count) return alert('There are no deleted posts to purge.');
+      if (!confirm(`Permanently purge all ${count} deleted post(s)? This cannot be undone.`)) return;
+      state.data.posts = state.data.posts.filter(p => !p.deleted);
+      persistData();
+      openTrashModal();
+      renderApp();
+    }
+
+    function exportData() {
+      const payload = structuredClone(state.data);
+      payload.exportedAt = nowIso();
+      const fileName = `control-tracking-log-${new Date().toISOString().slice(0,10)}.json`;
+      downloadJson(fileName, payload);
+    }
+
+    async function handleImportFileSelected(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        validateImportPayload(parsed);
+        ensureDataShape(parsed);
+        state.importPayload = parsed;
+        renderImportReview(parsed);
+        openModal('importModalBackdrop');
+      } catch (error) {
+        console.error(error);
+        alert('The selected file could not be imported. Make sure it is a valid JSON export from this app.');
+      } finally {
+        els.importFileInput.value = '';
+      }
+    }
+
+    function validateImportPayload(payload) {
+      if (!payload || typeof payload !== 'object') throw new Error('Invalid data.');
+      if (!Array.isArray(payload.users) || !Array.isArray(payload.posts)) throw new Error('Missing users or posts.');
+    }
+
+    function renderImportReview(payload) {
+      const usersCount = payload.users.length;
+      const activePosts = payload.posts.filter(p => !p.deleted).length;
+      const deletedPosts = payload.posts.filter(p => p.deleted).length;
+      const dates = payload.posts.map(p => p.dateKey).filter(Boolean).sort();
+      const rangeText = dates.length ? `${formatFullDate(dates[0])} to ${formatFullDate(dates[dates.length - 1])}` : 'No post dates found';
+
+      els.importSummary.innerHTML = `
+        <div class="stats">
+          <div class="stat"><b>${usersCount}</b><span class="muted">Users</span></div>
+          <div class="stat"><b>${activePosts}</b><span class="muted">Active Posts</span></div>
+          <div class="stat"><b>${deletedPosts}</b><span class="muted">Deleted Posts</span></div>
+        </div>
+        <div class="history-entry">
+          <div><b>Import file details</b></div>
+          <div class="meta">Version: ${escapeHtml(payload.version || 'Unknown')}</div>
+          <div class="meta">Date range: ${escapeHtml(rangeText)}</div>
+          <div class="meta">This import process avoids merge conflicts by replacing current data with only the items you keep below.</div>
+        </div>
+      `;
+
+      els.importItems.innerHTML = '';
+      if (payload.posts.length === 0) {
+        els.importItems.innerHTML = '<div class="empty-state">This file contains no posts.</div>';
+      } else {
+        payload.posts
+          .slice()
+          .sort((a,b) => (a.dateKey || '').localeCompare(b.dateKey || '') || (a.crewName || '').localeCompare(b.crewName || ''))
+          .forEach((post, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'import-item';
+            const checkboxId = `import-keep-${index}`;
+            wrapper.innerHTML = `
+              <div class="checkbox-row">
+                <input type="checkbox" id="${checkboxId}" data-import-index="${index}" checked />
+                <div style="flex:1;">
+                  <label for="${checkboxId}"><b>${escapeHtml(post.crewName || 'Untitled')}</b> · ${escapeHtml(post.subdivision || 'No subdivision')}</label>
+                  <div class="meta">${post.dateKey ? formatFullDate(post.dateKey) : 'No date'} · ${escapeHtml(post.controlType || '')}</div>
+                  <div class="meta">Posted by ${escapeHtml(post.createdByName || 'Unknown')} on ${post.createdAt ? formatDateTime(post.createdAt) : 'Unknown time'}</div>
+                  <div>${post.commentsNotes ? escapeHtml(post.commentsNotes).replace(/\n/g,'<br>') : '<span class="muted">No comments/notes.</span>'}</div>
+                  ${post.deleted ? '<div class="danger-text">Marked deleted in import file</div>' : ''}
+                </div>
+              </div>
+            `;
+            els.importItems.appendChild(wrapper);
+          });
+      }
+
+      els.overwriteConfirmCheck.checked = false;
+    }
+
+    function confirmImport() {
+      if (!state.importPayload) return alert('No import data loaded.');
+      if (!els.overwriteConfirmCheck.checked) return alert('Check the confirmation box before importing.');
+
+      const keepIndices = Array.from(els.importItems.querySelectorAll('input[data-import-index]'))
+        .filter(input => input.checked)
+        .map(input => Number(input.dataset.importIndex));
+
+      const incoming = structuredClone(state.importPayload);
+      incoming.posts = incoming.posts.filter((_, index) => keepIndices.includes(index));
+      ensureDataShape(incoming);
+
+      const hadCurrentUser = state.currentUserId;
+      const currentUserStillExists = incoming.users.some(u => u.id === hadCurrentUser);
+
+      state.data = incoming;
+      persistData();
+      closeModal('importModalBackdrop');
+      state.importPayload = null;
+
+      if (!currentUserStillExists) {
+        state.currentUserId = null;
+        state.selectedProfileId = null;
+        alert('Import complete. Your previous signed-in profile is not in the imported data, so you have been signed out.');
+      } else {
+        alert('Import complete. Current data was replaced with the selected imported items.');
+      }
+
+      renderAuth();
+      renderApp();
+    }
+
+    function openUsersModal() {
+      els.usersContent.innerHTML = '';
+      if (state.data.users.length === 0) {
+        els.usersContent.innerHTML = '<div class="empty-state">No users found.</div>';
+      } else {
+        state.data.users
+          .slice()
+          .sort((a,b) => a.name.localeCompare(b.name))
+          .forEach(user => {
+            const isCurrent = user.id === state.currentUserId;
+            const userPosts = state.data.posts.filter(p => p.createdByUserId === user.id).length;
+            const card = document.createElement('div');
+            card.className = 'history-entry';
+            card.innerHTML = `
+              <div class="row between">
+                <div>
+                  <div><b>${escapeHtml(user.name)}</b>${isCurrent ? ' <span class="accent-text">(Current)</span>' : ''}</div>
+                  <div class="meta">Created ${formatDateTime(user.createdAt)}</div>
+                  <div class="meta">Posts created: ${userPosts}</div>
+                </div>
+                <div class="post-actions">
+                  <button class="btn danger" data-user-delete="${user.id}">Delete User</button>
+                </div>
+              </div>
+              <div class="muted">Deleting a user removes the profile from sign-in but does not delete existing posts. Existing post history will still show that user's name where already recorded.</div>
+            `;
+            card.querySelector('[data-user-delete]').addEventListener('click', () => deleteUser(user.id));
+            els.usersContent.appendChild(card);
+          });
+      }
+      openModal('usersModalBackdrop');
+    }
+
+    function deleteUser(userId) {
+      const user = state.data.users.find(u => u.id === userId);
+      if (!user) return alert('User not found.');
+      if (!confirm(`Delete user \"${user.name}\"? This removes the profile from sign-in, but existing posts will remain.`)) return;
+      state.data.users = state.data.users.filter(u => u.id !== userId);
+      if (state.currentUserId === userId) state.currentUserId = null;
+      if (state.selectedProfileId === userId) state.selectedProfileId = null;
+      persistData();
+      openUsersModal();
+      renderAuth();
+      renderApp();
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('show');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    function closeAllModals() {
+      document.querySelectorAll('.modal-backdrop').forEach(modal => modal.classList.remove('show'));
+    }
+
+    function getPostsByDate(dateKey) {
+      return state.data.posts.filter(post => post.dateKey === dateKey);
+    }
+
+    function getCurrentUser() {
+      return state.data.users.find(u => u.id === state.currentUserId) || null;
+    }
+
+    function getDefaultMonthKey() {
+      return buildMonthKeys()[0];
+    }
+
+    function getFirstDayOfMonth(monthKey) {
+      return `${monthKey}-01`;
+    }
+
+    function buildMonthKeys() {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const end = new Date(2030, 11, 1);
+      const keys = [];
+      const cursor = new Date(start);
+      while (cursor <= end) {
+        keys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`);
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+      return keys;
+    }
+
+    function generateId() {
+      if (window.crypto?.randomUUID) return crypto.randomUUID();
+      return `id-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+    }
+
+    function nowIso() {
+      return new Date().toISOString();
+    }
+
+    async function hashPin(pin, salt) {
+      const encoder = new TextEncoder();
+      let value = `${salt}:${pin}`;
+      for (let i = 0; i < 2000; i++) {
+        const digest = await crypto.subtle.digest('SHA-256', encoder.encode(value));
+        value = bufferToHex(digest);
+      }
+      return value;
+    }
+
+    function bufferToHex(buffer) {
+      const bytes = new Uint8Array(buffer);
+      return Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function downloadJson(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function formatMonthKey(monthKey) {
+      const [year, month] = monthKey.split('-').map(Number);
+      return new Date(year, month - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    }
+
+    function formatFullDate(dateKey) {
+      const [year, month, day] = dateKey.split('-').map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+    }
+
+    function formatDateTime(isoString) {
+      if (!isoString) return 'Unknown time';
+      const date = new Date(isoString);
+      return date.toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      });
+    }
+
+    function capitalize(value) {
+      return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>
