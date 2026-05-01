@@ -1,0 +1,651 @@
+import React, { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Clock3,
+  Filter,
+  LogIn,
+  MapPin,
+  Search,
+  ShieldCheck,
+  TrendingUp,
+  User,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
+const START_MONTH = new Date(2026, 3, 1); // April 2026
+const END_MONTH = new Date(2027, 4, 1); // May 2027
+const TODAY = new Date();
+
+const crewEvents = [
+  {
+    id: 1,
+    date: "2026-05-01",
+    title: "Morning Site Sign-In",
+    location: "SW ORL - Lot 18",
+    crew: "Jeremy D.",
+    type: "Final",
+    status: "Completed",
+    time: "7:42 AM",
+  },
+  {
+    id: 2,
+    date: "2026-05-01",
+    title: "Boundary Verification",
+    location: "Tampa - Block C",
+    crew: "Austin",
+    type: "Form",
+    status: "In Progress",
+    time: "8:03 AM",
+  },
+  {
+    id: 3,
+    date: "2026-05-02",
+    title: "Stakeout Check",
+    location: "Sarasota - Phase 2",
+    crew: "Gustavo",
+    type: "Slab",
+    status: "Scheduled",
+    time: "7:30 AM",
+  },
+  {
+    id: 4,
+    date: "2026-05-04",
+    title: "Control Review",
+    location: "Palmetto - Sector 4",
+    crew: "Hunter",
+    type: "Control",
+    status: "Scheduled",
+    time: "8:00 AM",
+  },
+  {
+    id: 5,
+    date: "2026-05-07",
+    title: "Rush Builder Visit",
+    location: "Bradenton - Lot 11",
+    crew: "Jeremy S.",
+    type: "Rush",
+    status: "Scheduled",
+    time: "7:15 AM",
+  },
+];
+
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function formatMonth(date) {
+  return date.toLocaleString("en-US", { month: "long", year: "numeric" });
+}
+
+function formatDayLabel(date) {
+  return date.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function dateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function clampMonth(date) {
+  if (date < START_MONTH) return START_MONTH;
+  if (date > END_MONTH) return END_MONTH;
+  return date;
+}
+
+function monthWithinBounds(date) {
+  return date >= START_MONTH && date <= END_MONTH;
+}
+
+function generateMonthDays(monthDate) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startDay = firstDay.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+
+  for (let i = 0; i < startDay; i += 1) {
+    cells.push(null);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    cells.push(new Date(year, month, day));
+  }
+
+  return cells;
+}
+
+function getEventsForDate(date) {
+  return crewEvents.filter((event) => event.date === dateKey(date));
+}
+
+function LogoMark() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/85 shadow-sm ring-1 ring-black/5">
+        <MapPin className="h-5 w-5" />
+      </div>
+      <div>
+        <div className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
+          Allpoints
+        </div>
+        <div className="text-lg font-semibold text-slate-900">Surveying</div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, subtext }) {
+  return (
+    <Card className="rounded-3xl border-white/60 bg-white/70 shadow-[0_10px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-sm text-slate-500">{label}</div>
+            <div className="mt-2 text-2xl font-semibold text-slate-900">{value}</div>
+            <div className="mt-1 text-xs text-slate-500">{subtext}</div>
+          </div>
+          <div className="rounded-2xl bg-slate-900/5 p-3">
+            <Icon className="h-5 w-5 text-slate-700" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SignInScreen({ onEnter }) {
+  return (
+    <div className="grid min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.95),_rgba(226,232,240,0.92)_35%,_rgba(241,245,249,1)_70%)] lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="relative overflow-hidden px-6 py-8 sm:px-10 lg:px-16 lg:py-12">
+        <div className="absolute left-10 top-10 h-44 w-44 rounded-full bg-white/50 blur-3xl" />
+        <div className="absolute bottom-10 right-10 h-56 w-56 rounded-full bg-slate-200/60 blur-3xl" />
+
+        <div className="relative flex h-full flex-col justify-between">
+          <div className="flex items-center justify-between gap-4">
+            <LogoMark />
+            <Badge className="rounded-full border-0 bg-white/75 px-4 py-1.5 text-slate-600 shadow-sm backdrop-blur-md">
+              Field operations portal
+            </Badge>
+          </div>
+
+          <div className="mx-auto flex w-full max-w-2xl flex-1 items-center py-10 lg:py-0">
+            <div className="w-full">
+              <motion.div
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45 }}
+                className="max-w-xl"
+              >
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm text-slate-600 shadow-sm backdrop-blur-md">
+                  <ClipboardList className="h-4 w-4" />
+                  Daily field logs, cleaner and faster
+                </div>
+                <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+                  Sign in to the field log dashboard.
+                </h1>
+                <p className="mt-5 max-w-lg text-base leading-7 text-slate-600 sm:text-lg">
+                  A lighter, more polished experience for sign-ins, daily visibility, and month-level crew activity.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 22 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08, duration: 0.45 }}
+                className="mt-8 grid gap-4 sm:grid-cols-3"
+              >
+                <StatCard
+                  icon={Clock3}
+                  label="Arrival visibility"
+                  value="Live"
+                  subtext="See first-site timing faster"
+                />
+                <StatCard
+                  icon={TrendingUp}
+                  label="Monthly rollup"
+                  value="From April 2026"
+                  subtext="Track trends over time"
+                />
+                <StatCard
+                  icon={CalendarDays}
+                  label="Date range"
+                  value="May 2027"
+                  subtext="Upper limit for browsing"
+                />
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="text-sm text-slate-500">Allpoints Surveying · Crew access</div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center px-6 py-10 sm:px-10 lg:px-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.05 }}
+          className="w-full max-w-md"
+        >
+          <Card className="rounded-[2rem] border-white/70 bg-white/80 shadow-[0_16px_60px_rgba(15,23,42,0.12)] backdrop-blur-2xl">
+            <CardHeader className="space-y-3 px-7 pb-2 pt-7">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-semibold tracking-tight text-slate-950">
+                  Welcome back
+                </CardTitle>
+                <div className="rounded-2xl bg-slate-900/5 p-3">
+                  <LogIn className="h-5 w-5 text-slate-700" />
+                </div>
+              </div>
+              <p className="text-sm leading-6 text-slate-500">
+                Use your crew credentials to access the redesigned sign-in experience.
+              </p>
+            </CardHeader>
+            <CardContent className="px-7 pb-7 pt-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      placeholder="crew@allpoints.com"
+                      className="h-12 rounded-2xl border-slate-200 bg-white/80 pl-11 text-sm shadow-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
+                  <div className="relative">
+                    <ShieldCheck className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      type="password"
+                      placeholder="Enter password"
+                      className="h-12 rounded-2xl border-slate-200 bg-white/80 pl-11 text-sm shadow-sm"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={onEnter}
+                  className="h-12 w-full rounded-2xl bg-slate-950 text-base font-medium text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800"
+                >
+                  Enter dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function AppHeader({ view, setView, search, setSearch }) {
+  return (
+    <div className="sticky top-0 z-30 border-b border-white/50 bg-slate-100/70 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-4">
+          <LogoMark />
+          <div className="hidden h-9 w-px bg-slate-300 lg:block" />
+          <div className="hidden lg:block">
+            <div className="text-sm text-slate-500">Operations dashboard</div>
+            <div className="text-lg font-semibold text-slate-900">Field Log Redesign</div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative min-w-[240px] flex-1 sm:flex-none">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search crews, lots, tasks..."
+              className="h-11 rounded-2xl border-white/60 bg-white/80 pl-10 shadow-sm"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 rounded-2xl bg-white/75 p-1 shadow-sm ring-1 ring-black/5 backdrop-blur-md">
+            {[
+              { key: "day", label: "Day" },
+              { key: "month", label: "Monthly" },
+            ].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setView(item.key)}
+                className={cn(
+                  "rounded-xl px-4 py-2 text-sm font-medium transition",
+                  view === item.key
+                    ? "bg-slate-950 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100"
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DayView({ selectedDate, setSelectedDate }) {
+  const entries = getEventsForDate(selectedDate);
+  const previousDay = new Date(selectedDate);
+  previousDay.setDate(selectedDate.getDate() - 1);
+  const nextDay = new Date(selectedDate);
+  nextDay.setDate(selectedDate.getDate() + 1);
+
+  return (
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-white/55 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl sm:p-6"
+      >
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.7),rgba(241,245,249,0.35),rgba(255,255,255,0.65))]" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="text-sm uppercase tracking-[0.18em] text-slate-500">Day mode</div>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+              {formatDayLabel(selectedDate)}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              Floating glass-style calendar header card for quick daily visibility, cleaner navigation, and faster review of crew activity.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start rounded-2xl bg-white/80 p-1.5 shadow-sm ring-1 ring-black/5">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedDate(previousDay)}
+              className="rounded-xl"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setSelectedDate(new Date())}
+              className="rounded-xl px-4"
+            >
+              Today
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedDate(nextDay)}
+              className="rounded-xl"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card className="rounded-[2rem] border-white/60 bg-white/75 shadow-[0_16px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+          <CardHeader className="flex flex-row items-center justify-between px-6 pb-2 pt-6">
+            <div>
+              <CardTitle className="text-xl font-semibold text-slate-900">Daily activity</CardTitle>
+              <p className="mt-1 text-sm text-slate-500">Field sign-ins and scheduled work for the selected date.</p>
+            </div>
+            <Button variant="outline" className="rounded-2xl border-white/70 bg-white/70">
+              <Filter className="mr-2 h-4 w-4" />
+              Filter
+            </Button>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 pt-4">
+            <div className="space-y-4">
+              {entries.length ? (
+                entries.map((entry) => (
+                  <motion.div
+                    key={entry.id}
+                    layout
+                    className="rounded-3xl border border-slate-200/70 bg-slate-50/80 p-4 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-lg font-semibold text-slate-900">{entry.title}</div>
+                          <Badge className="rounded-full border-0 bg-white text-slate-700 shadow-sm">{entry.status}</Badge>
+                        </div>
+                        <div className="mt-2 text-sm text-slate-600">{entry.location}</div>
+                        <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-500">
+                          <span className="rounded-full bg-white px-3 py-1 shadow-sm">Crew: {entry.crew}</span>
+                          <span className="rounded-full bg-white px-3 py-1 shadow-sm">Type: {entry.type}</span>
+                        </div>
+                      </div>
+                      <div className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">
+                        {entry.time}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 p-8 text-center text-slate-500">
+                  No entries scheduled for this date.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <StatCard icon={ClipboardList} label="Entries today" value={String(entries.length)} subtext="Visible for selected day" />
+          <StatCard icon={Clock3} label="First arrival target" value="8:00 AM" subtext="Latest expected first-site arrival" />
+          <StatCard icon={TrendingUp} label="Active crews" value="4" subtext="Across visible date window" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MonthlyView({ selectedMonth, setSelectedMonth, selectedDate, setSelectedDate, search }) {
+  const monthCells = useMemo(() => generateMonthDays(selectedMonth), [selectedMonth]);
+
+  const filteredEvents = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const monthPrefix = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}`;
+
+    return crewEvents.filter((event) => {
+      const inMonth = event.date.startsWith(monthPrefix);
+      if (!inMonth) return false;
+      if (!q) return true;
+      return [event.title, event.location, event.crew, event.type, event.status]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [selectedMonth, search]);
+
+  const goMonth = (delta) => {
+    const next = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + delta, 1);
+    if (monthWithinBounds(next)) {
+      setSelectedMonth(next);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 rounded-[2rem] border border-white/60 bg-white/70 p-5 shadow-[0_16px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+          <div className="text-sm uppercase tracking-[0.18em] text-slate-500">Monthly view</div>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+            {formatMonth(selectedMonth)}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+            Monthly crew activity and rollups. From April 2026 through May 2027.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-2xl bg-white/80 p-1.5 shadow-sm ring-1 ring-black/5">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => goMonth(-1)}
+            disabled={selectedMonth <= START_MONTH}
+            className="rounded-xl"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" onClick={() => setSelectedMonth(clampMonth(new Date(TODAY.getFullYear(), TODAY.getMonth(), 1)))} className="rounded-xl px-4">
+            Current month
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => goMonth(1)}
+            disabled={selectedMonth >= END_MONTH}
+            className="rounded-xl"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="rounded-[2rem] border-white/60 bg-white/75 shadow-[0_16px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+          <CardContent className="p-4 sm:p-6">
+            <div className="mb-4 grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                <div key={day} className="py-2">{day}</div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {monthCells.map((day, index) => {
+                if (!day) {
+                  return <div key={`empty-${index}`} className="aspect-square rounded-2xl bg-transparent" />;
+                }
+
+                const events = getEventsForDate(day);
+                const isToday = dateKey(day) === dateKey(new Date());
+                const isSelected = dateKey(day) === dateKey(selectedDate);
+
+                return (
+                  <button
+                    key={dateKey(day)}
+                    onClick={() => setSelectedDate(day)}
+                    className={cn(
+                      "group aspect-square rounded-[1.3rem] border p-2 text-left transition",
+                      isSelected
+                        ? "border-slate-900 bg-slate-900 text-white shadow-lg"
+                        : "border-slate-200/80 bg-slate-50/80 hover:border-slate-300 hover:bg-white",
+                      isToday && !isSelected && "ring-2 ring-slate-300"
+                    )}
+                  >
+                    <div className="flex h-full flex-col justify-between">
+                      <div className="text-sm font-semibold">{day.getDate()}</div>
+                      <div className="space-y-1">
+                        {events.slice(0, 2).map((event) => (
+                          <div
+                            key={event.id}
+                            className={cn(
+                              "truncate rounded-full px-2 py-1 text-[10px]",
+                              isSelected ? "bg-white/15 text-white" : "bg-white text-slate-700 shadow-sm"
+                            )}
+                          >
+                            {event.crew}
+                          </div>
+                        ))}
+                        {events.length > 2 && (
+                          <div className={cn("text-[10px]", isSelected ? "text-white/80" : "text-slate-500")}>
+                            +{events.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <StatCard icon={CalendarDays} label="Selected month events" value={String(filteredEvents.length)} subtext="Filtered by current search" />
+          <Card className="rounded-[2rem] border-white/60 bg-white/75 shadow-[0_16px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+            <CardHeader className="px-6 pb-2 pt-6">
+              <CardTitle className="text-xl font-semibold text-slate-900">Month summary</CardTitle>
+              <p className="text-sm text-slate-500">From April 2026. Review key jobs and crew assignments quickly.</p>
+            </CardHeader>
+            <CardContent className="px-6 pb-6 pt-4">
+              <div className="space-y-3">
+                {filteredEvents.length ? (
+                  filteredEvents.map((event) => (
+                    <div key={event.id} className="rounded-2xl bg-slate-50/85 p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-medium text-slate-900">{event.title}</div>
+                          <div className="mt-1 text-sm text-slate-500">{event.date} · {event.location}</div>
+                        </div>
+                        <Badge className="rounded-full border-0 bg-white text-slate-700 shadow-sm">{event.crew}</Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-6 text-sm text-slate-500">
+                    No month entries match the current search.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AllpointsFieldLogRedesign() {
+  const currentMonth = clampMonth(new Date(TODAY.getFullYear(), TODAY.getMonth(), 1));
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [view, setView] = useState("day");
+  const [search, setSearch] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+
+  return (
+    <div className="min-h-screen bg-slate-100 text-slate-900">
+      <AnimatePresence mode="wait">
+        {!isSignedIn ? (
+          <motion.div key="signin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <SignInScreen onEnter={() => setIsSignedIn(true)} />
+          </motion.div>
+        ) : (
+          <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <AppHeader view={view} setView={setView} search={search} setSearch={setSearch} />
+            <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+              {view === "day" ? (
+                <DayView selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+              ) : (
+                <MonthlyView
+                  selectedMonth={selectedMonth}
+                  setSelectedMonth={setSelectedMonth}
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                  search={search}
+                />
+              )}
+            </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
