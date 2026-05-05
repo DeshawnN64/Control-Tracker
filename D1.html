@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>D$: Hustle Town</title>
+<style>
+  :root {
+    --bg: #101318;
+    --panel: rgba(20,24,31,.9);
+    --panel2: rgba(255,255,255,.06);
+    --text: #f3f6fb;
+    --muted: #9aa6b2;
+    --accent: #3dd6ff;
+    --accent2: #ff4fd8;
+    --good: #35d07f;
+    --warn: #ffcf4a;
+    --bad: #ff5f72;
+    --gold: #f4c15d;
+    --shadow: 0 14px 34px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; height:100%; background: var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; overflow:hidden; }
+  body.phase-gritty {
+    background: radial-gradient(circle at top, rgba(186,76,29,.18), transparent 28%), linear-gradient(180deg, #16110f 0%, #0e1117 100%);
+  }
+  body.phase-neon {
+    background: radial-gradient(circle at top, rgba(61,214,255,.18), transparent 25%), radial-gradient(circle at right, rgba(255,79,216,.12), transparent 25%), linear-gradient(180deg, #101527 0%, #090c13 100%);
+  }
+  body.phase-luxury {
+    background: radial-gradient(circle at top, rgba(244,193,93,.14), transparent 25%), linear-gradient(180deg, #10131a 0%, #06080c 100%);
+  }
+  #app { max-width: 480px; height: 100%; margin: 0 auto; position: relative; display:flex; flex-direction:column; }
+  .topbar {
+    padding: 12px 14px 10px;
+    display:grid;
+    grid-template-columns: 1fr auto;
+    gap:10px;
+    position:relative;
+    z-index:2;
+  }
+  .brand { font-weight: 900; letter-spacing:.02em; font-size: 1.15rem; }
+  .tiny { font-size:.72rem; color:var(--muted); }
+  .chiprow { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .chip { background: var(--panel2); padding:7px 10px; border-radius: 999px; font-size:.78rem; }
+  .hero {
+    margin: 0 12px 10px; border-radius: 24px; padding: 14px; background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); box-shadow: var(--shadow); position:relative; overflow:hidden; min-height:130px;
+  }
+  .skyline { position:absolute; right:-16px; bottom:-8px; font-size: 5rem; opacity:.08; }
+  .district { font-size:1.25rem; font-weight:800; }
+  .subtitle { color: var(--muted); max-width: 75%; }
+  .metrics { display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin-top: 12px; }
+  .card { background: var(--panel); border:1px solid rgba(255,255,255,.06); border-radius: 20px; padding: 12px; }
+  .barwrap { margin-top:8px; background: rgba(255,255,255,.08); border-radius:999px; height:10px; overflow:hidden; }
+  .bar { height:100%; width:0%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .25s; }
+  .sectionTitle { display:flex; justify-content:space-between; align-items:center; margin: 10px 12px 8px; font-size:.95rem; font-weight:800; }
+  #content { flex:1; overflow:auto; padding: 0 12px 110px; }
+  .resource { margin-bottom:10px; }
+  .resource h3 { margin:0 0 4px; font-size:.96rem; }
+  .resource .meta { display:flex; justify-content:space-between; color:var(--muted); font-size:.78rem; margin-bottom:10px; }
+  .btnrow { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  button {
+    appearance:none; border:none; cursor:pointer; color:var(--text); background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06)); padding: 12px 14px; border-radius: 16px; font-weight: 800; box-shadow: var(--shadow);
+  }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .primary { background: linear-gradient(180deg, var(--accent), #188be6); }
+  .hot { background: linear-gradient(180deg, var(--accent2), #9a2fef); }
+  .good { background: linear-gradient(180deg, #3ed68a, #1aa95c); }
+  .warn { background: linear-gradient(180deg, #ffcf4a, #e79b21); color:#141414; }
+  .danger { background: linear-gradient(180deg, #ff6d85, #d13653); }
+  .small { padding: 9px 11px; border-radius:12px; font-size:.85rem; }
+  .tag { display:inline-block; padding: 4px 8px; border-radius: 999px; font-size:.72rem; font-weight: 800; background: rgba(255,255,255,.08); }
+  .tag.maxed { background: rgba(53,208,127,.18); color: #93ffbd; }
+  .floatingTap { position: absolute; color: #90ffd0; font-weight: 900; pointer-events:none; animation: floatUp .8s ease forwards; }
+  @keyframes floatUp { from { opacity:1; transform: translateY(0); } to { opacity:0; transform: translateY(-30px); } }
+  .bottomnav {
+    position:absolute; left:0; right:0; bottom:0; padding: 10px 12px 14px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.2) 18%, rgba(0,0,0,.55));
+  }
+  .navwrap { display:grid; grid-template-columns: repeat(5,1fr); gap:8px; }
+  .navbtn { font-size:.72rem; padding:10px 6px; border-radius:16px; }
+  .navbtn.active { outline: 2px solid rgba(61,214,255,.55); }
+  .overlay { position:absolute; inset:0; background: rgba(4,6,9,.88); backdrop-filter: blur(10px); z-index:20; display:none; }
+  .overlay.show { display:block; }
+  .sheet { height:100%; display:flex; flex-direction:column; }
+  .sheetHeader { padding: 14px 12px 8px; display:flex; justify-content:space-between; align-items:center; }
+  .sheetContent { flex:1; overflow:auto; padding: 0 12px 20px; }
+  canvas { width:100%; background: rgba(255,255,255,.03); border-radius: 22px; }
+  .center { text-align:center; }
+  .huge { font-size: 2rem; font-weight:900; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  .grid3 { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; }
+  .stack { display:flex; flex-direction:column; gap:10px; }
+  .line { height:1px; background: rgba(255,255,255,.08); margin:10px 0; }
+  .muted { color: var(--muted); }
+  .mono { font-variant-numeric: tabular-nums; }
+  .toast { position:absolute; left:50%; transform:translateX(-50%); top:84px; background: rgba(0,0,0,.7); padding:10px 14px; border-radius:14px; z-index:30; font-weight:800; display:none; }
+  .toast.show { display:block; animation: toastIn 1.7s ease; }
+  @keyframes toastIn { 0% { opacity:0; transform:translateX(-50%) translateY(-6px);} 15%,85% {opacity:1; transform:translateX(-50%) translateY(0);} 100% {opacity:0; transform:translateX(-50%) translateY(-6px);} }
+  .orderBtn, .pulseBtn, .cargoBtn, .issueBtn, .rocketBtn { min-height: 62px; }
+  .cards { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  .playingCard { background:#fff; color:#111; border-radius:16px; padding:12px; min-height:88px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.4rem; }
+  .playingCard.red { color:#d22648; }
+  .confetti { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+  .confetti span { position:absolute; width:8px; height:14px; opacity:.8; animation: drop 1.6s linear forwards; }
+  @keyframes drop { from { transform: translateY(-20px) rotate(0deg); } to { transform: translateY(110vh) rotate(440deg);} }
+</style>
+</head>
+<body class="phase-gritty">
+<div id="app">
+  <div class="toast" id="toast"></div>
+  <div class="topbar">
+    <div>
+      <div class="brand">D$: Hustle Town</div>
+      <div class="tiny" id="runLabel">Base Run • Level 1</div>
+      <div class="chiprow">
+        <div class="chip mono" id="moneyChip">$0</div>
+        <div class="chip mono" id="incomeChip">$0/s</div>
+        <div class="chip mono" id="tapChip">Tap +$0</div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div class="tag" id="weatherChip">Houston Vibes</div>
+      <div class="tiny" style="margin-top:8px;">Save auto-on</div>
+    </div>
+  </div>
+
+  <div class="hero" id="heroTapZone">
+    <div class="skyline">🏙️</div>
+    <div class="tag" id="phaseTag">Gritty Start</div>
+    <div class="district" id="districtName">Southside Start</div>
+    <div class="subtitle" id="districtBlurb">Neighborhood grind. Small stacks. Big energy.</div>
+    <div class="metrics">
+      <div class="card">
+        <div class="tiny">Empire XP</div>
+        <div class="mono" id="xpText">0 / 2</div>
+        <div class="barwrap"><div class="bar" id="xpBar"></div></div>
+      </div>
+      <div class="card">
+        <div class="tiny">Challenge Gate</div>
+        <div id="challengeState">Max both hustles</div>
+        <div class="barwrap"><div class="bar" id="challengeBar"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sectionTitle"><span id="sectionHeading">Featured Hustles</span><span class="tiny" id="statusHint">Max both hustles to unlock challenge</span></div>
+  <div id="content"></div>
+
+  <div class="bottomnav">
+    <div class="navwrap">
+      <button class="navbtn active" data-tab="home">Home</button>
+      <button class="navbtn" data-tab="hustles">Hustles</button>
+      <button class="navbtn" data-tab="challenge">Challenge</button>
+      <button class="navbtn" data-tab="district">District</button>
+      <button class="navbtn" data-tab="prestige">NG+</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="sheet">
+      <div class="sheetHeader">
+        <div>
+          <div class="brand" id="overlayTitle">Mini Game</div>
+          <div class="tiny" id="overlaySub">Beat the gate to level up.</div>
+        </div>
+        <button class="small" id="closeOverlay">Close</button>
+      </div>
+      <div class="sheetContent" id="overlayContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const levels = [
+    { id:1, name:'Southside Start', phase:'gritty', phaseLabel:'Gritty Start', blurb:'Neighborhood grind. Small stacks. Big energy.',
+      clear:'Okay, you poppin’ now. The block see you.',
+      businesses:[
+        {id:'lemonade', name:'Lemonade Stand', unlock:10, base:1, growth:1.72},
+        {id:'foodtruck', name:'Food Truck', unlock:60, base:5, growth:1.80}
+      ], mini:'foodtruck', reward:250 },
+    { id:2, name:'Bayou Grind', phase:'gritty', phaseLabel:'Bayou City Hustle', blurb:'Heat, hustle, and local expansion.',
+      clear:'Bayou City made room for your hustle.',
+      businesses:[
+        {id:'carwash', name:'Car Wash', unlock:250, base:14, growth:1.72},
+        {id:'baitshop', name:'Bayou Bait Shop', unlock:500, base:26, growth:1.80}
+      ], mini:'cleanup', reward:1000 },
+    { id:3, name:'Block to Block', phase:'gritty', phaseLabel:'Street Motion', blurb:'Move smart, stack fast, stay out the jam.',
+      clear:'You slid through that clean. No lane switch wasted.',
+      businesses:[
+        {id:'courier', name:'Courier Van Service', unlock:1500, base:70, growth:1.74},
+        {id:'corner', name:'Corner Store', unlock:3000, base:135, growth:1.82}
+      ], mini:'traffic', reward:5000 },
+    { id:4, name:'Midtown Tables', phase:'neon', phaseLabel:'Midtown Stakes', blurb:'Late-night money and cooler nerves.',
+      clear:'You kept it player and left the table up.',
+      businesses:[
+        {id:'cardlounge', name:'Private Card Lounge', unlock:7500, base:320, growth:1.75},
+        {id:'valet', name:'Valet Service', unlock:14000, base:590, growth:1.83}
+      ], mini:'blackjack', reward:18000 },
+    { id:5, name:'Midtown Motion', phase:'neon', phaseLabel:'Real Motion', blurb:'Lights bright, crowds live, money moving.',
+      clear:'Now you got motion for real. Lights hittin’, money flowin’.',
+      businesses:[
+        {id:'promo', name:'Club Promo Agency', unlock:30000, base:1250, growth:1.75},
+        {id:'hookah', name:'Hookah Lounge', unlock:55000, base:2200, growth:1.84}
+      ], mini:'streetbet', reward:70000 },
+    { id:6, name:'Energy Corridor', phase:'neon', phaseLabel:'Pressure Money', blurb:'Heavy deals and tighter timing.',
+      clear:'That’s grown Houston money right there. Pressure never broke you.',
+      businesses:[
+        {id:'pump', name:'Pump Service Company', unlock:120000, base:5100, growth:1.76},
+        {id:'diesel', name:'Diesel Supply Contract', unlock:240000, base:9600, growth:1.84}
+      ], mini:'neonpulse', reward:300000 },
+    { id:7, name:'Port Authority Run', phase:'neon', phaseLabel:'Ship Channel Pace', blurb:'Volume, timing, and serious loadout.',
+      clear:'You got the port jumpin’. Heavy load, light work.',
+      businesses:[
+        {id:'cargo', name:'Cargo Loading Crew', unlock:600000, base:24000, growth:1.76},
+        {id:'brokerage', name:'Shipping Brokerage', unlock:1100000, base:43000, growth:1.85}
+      ], mini:'portload', reward:1300000 },
+    { id:8, name:'Storm Season', phase:'luxury', phaseLabel:'Pressure Tested', blurb:'Chaotic conditions. Controlled response.',
+      clear:'Storm came through talking crazy. You talked crazier.',
+      businesses:[
+        {id:'supply', name:'Emergency Supply Depot', unlock:3000000, base:110000, growth:1.77},
+        {id:'repair', name:'Property Repair Team', unlock:6000000, base:210000, growth:1.85}
+      ], mini:'storm', reward:6000000 },
+    { id:9, name:'Space City Rising', phase:'luxury', phaseLabel:'Lift-Off Money', blurb:'Innovation, prestige, and launch windows.',
+      clear:'Space City status. You ain’t just up there — you belong there.',
+      businesses:[
+        {id:'startup', name:'Tech Startup Hub', unlock:15000000, base:500000, growth:1.77},
+        {id:'aerospace', name:'Aerospace Supplier', unlock:30000000, base:950000, growth:1.86}
+      ], mini:'rocket', reward:28000000 },
+    { id:10, name:'Skyline Capital', phase:'luxury', phaseLabel:'Top Floor Energy', blurb:'Executive stacks and penthouse pressure.',
+      clear:'Top floor energy. Whole skyline look different from your side.',
+      businesses:[
+        {id:'rentals', name:'Luxury High-Rise Rentals', unlock:75000000, base:2300000, growth:1.78},
+        {id:'firm', name:'Investment Firm', unlock:150000000, base:4400000, growth:1.86}
+      ], mini:'skylinehop', reward:130000000 },
+    { id:11, name:'Hustle Town Crown', phase:'luxury', phaseLabel:'City Stamp', blurb:'Every district touched. Every light yours.',
+      clear:'',
+      businesses:[
+        {id:'megacontract', name:'Port Megacontract Holdings', unlock:375000000, base:10500000, growth:1.78},
+        {id:'hq', name:'Downtown Conglomerate HQ', unlock:750000000, base:20000000, growth:1.87}
+      ], mini:'empirenight', reward:0 }
+  ];
+
+  const tierMultipliers = [1,1.6,2.5,3.8,5.6,8.2,11.8,16.8,23.5,32];
+  const fmt = n => {
+    const abs = Math.abs(n);
+    if (abs >= 1e12) return '$' + (n/1e12).toFixed(2).replace(/\.00$/,'') + 'T';
+    if (abs >= 1e9) return '$' + (n/1e9).toFixed(2).replace(/\.00$/,'') + 'B';
+    if (abs >= 1e6) return '$' + (n/1e6).toFixed(2).replace(/\.00$/,'') + 'M';
+    if (abs >= 1e3) return '$' + (n/1e3).toFixed(1).replace(/\.0$/,'') + 'K';
+    return '$' + Math.floor(n).toLocaleString();
+  };
+  const moneyNum = n => Math.max(0, Number(n.toFixed ? n.toFixed(2) : n));
+
+  const defaultState = () => ({
+    money: 25,
+    level: 1,
+    ng: 0,
+    totalClears: 0,
+    sandbox: false,
+    lastWeather: 'Houston Vibes',
+    businesses: {},
+    miniClears: {},
+    achievements: [],
+    startedAt: Date.now(),
+  });
+
+  let state = load();
+  let activeTab = 'home';
+  let incomePerSec = 0;
+  let overlayMode = null;
+  let miniCleanup = null;
+
+  const el = id => document.getElementById(id);
+  const app = el('app');
+  const content = el('content');
+  const overlay = el('overlay');
+  const overlayTitle = el('overlayTitle');
+  const overlaySub = el('overlaySub');
+  const overlayContent = el('overlayContent');
+
+  function save() { localStorage.setItem('d_hustle_town_save', JSON.stringify(state)); }
+  function load() {
+    try {
+      const raw = localStorage.getItem('d_hustle_town_save');
+      if (!raw) return defaultState();
+      return Object.assign(defaultState(), JSON.parse(raw));
+    } catch { return defaultState(); }
+  }
+
+  function resetForNG(nextNg) {
+    const keepAchievements = state.achievements || [];
+    state = defaultState();
+    state.ng = nextNg;
+    state.money = 25 * (1 + [0,.12,.25,.40,.60,.85][nextNg]);
+    state.achievements = keepAchievements;
+    save();
+    showToast(nextNg === 0 ? 'Fresh run started' : `NG+${nextNg} live`);
+  }
+
+  function currentLevel() { return levels[Math.min(state.level - 1, levels.length - 1)]; }
+  function phaseClass(levelId) {
+    if (levelId <= 3) return 'phase-gritty';
+    if (levelId <= 7) return 'phase-neon';
+    return 'phase-luxury';
+  }
+  function getBizState(biz) {
+    if (!state.businesses[biz.id]) state.businesses[biz.id] = { tier: 0, maxedXpGranted: false };
+    return state.businesses[biz.id];
+  }
+  function getBizIncome(biz) {
+    const s = getBizState(biz);
+    if (s.tier <= 0) return 0;
+    const ngBoost = 1 + [0,.08,.16,.24,.34,.45][state.ng];
+    return biz.base * tierMultipliers[s.tier - 1] * ngBoost;
+  }
+  function getBizNextCost(biz) {
+    const s = getBizState(biz);
+    if (s.tier >= 10) return null;
+    if (s.tier === 0) return biz.unlock;
+    return Math.round(biz.unlock * Math.pow(biz.growth, s.tier));
+  }
+  function levelXp(level) {
+    return level.businesses.reduce((acc,b)=> acc + (getBizState(b).tier >= 10 ? 1 : 0), 0);
+  }
+  function challengeUnlocked(level) { return levelXp(level) >= 2; }
+  function miniCleared(levelId) { return !!state.miniClears[levelId]; }
+  function canLevelUp(level) { return challengeUnlocked(level) && miniCleared(level.id); }
+
+  function buyOrUpgrade(bizId) {
+    const level = currentLevel();
+    const biz = levels.flatMap(l=>l.businesses).find(b=>b.id === bizId);
+    const s = getBizState(biz);
+    const cost = getBizNextCost(biz);
+    if (cost == null || state.money < cost) return;
+    state.money -= cost;
+    s.tier += 1;
+    if (s.tier >= 10 && !s.maxedXpGranted) {
+      s.maxedXpGranted = true;
+      showToast(`${biz.name} MAXED • Empire XP +1`);
+      burstConfetti();
+    }
+    save(); render();
+  }
+
+  function levelUp() {
+    const level = currentLevel();
+    if (!canLevelUp(level)) return;
+    if (level.id === 11) {
+      state.totalClears += 1;
+      state.sandbox = true;
+      save();
+      showCompletionPopup();
+      return;
+    }
+    state.money += level.reward;
+    state.level += 1;
+    state.sandbox = false;
+    save();
+    burstConfetti();
+    showToast(level.clear || 'Level cleared');
+    render();
+  }
+
+  function showToast(msg) {
+    const t = el('toast');
+    t.textContent = msg;
+    t.classList.remove('show');
+    void t.offsetWidth;
+    t.classList.add('show');
+  }
+
+  function burstConfetti() {
+    const wrap = document.createElement('div');
+    wrap.className = 'confetti';
+    for (let i=0;i<26;i++) {
+      const s = document.createElement('span');
+      s.style.left = Math.random()*100 + '%';
+      s.style.background = ['#3dd6ff','#ff4fd8','#35d07f','#f4c15d'][Math.floor(Math.random()*4)];
+      s.style.animationDelay = (Math.random()*.25) + 's';
+      wrap.appendChild(s);
+    }
+    app.appendChild(wrap);
+    setTimeout(()=> wrap.remove(), 1700);
+  }
+
+  function render() {
+    const level = currentLevel();
+    document.body.className = phaseClass(level.id);
+    el('runLabel').textContent = `${state.ng ? `NG+${state.ng}` : 'Base Run'} • Level ${state.level}`;
+    el('moneyChip').textContent = fmt(state.money);
+    recalcIncome();
+    el('incomeChip').textContent = `${fmt(incomePerSec)}/s`;
+    el('tapChip').textContent = `Tap +${fmt(getTapValue()).replace('$','')}`;
+    el('weatherChip').textContent = state.lastWeather;
+    el('phaseTag').textContent = level.phaseLabel;
+    el('districtName').textContent = level.name;
+    el('districtBlurb').textContent = level.blurb;
+    el('xpText').textContent = `${levelXp(level)} / 2`;
+    el('xpBar').style.width = `${levelXp(level) / 2 * 100}%`;
+    const prog = (challengeUnlocked(level) ? (miniCleared(level.id) ? 100 : 70) : levelXp(level) / 2 * 60);
+    el('challengeBar').style.width = `${prog}%`;
+    el('challengeState').textContent = miniCleared(level.id) ? 'Challenge complete' : (challengeUnlocked(level) ? 'Challenge unlocked' : 'Max both hustles');
+    el('statusHint').textContent = miniCleared(level.id) ? 'Hit continue to level up' : (challengeUnlocked(level) ? 'Beat the challenge to level up' : 'Max both hustles to unlock challenge');
+
+    renderTab();
+  }
+
+  function renderTab() {
+    document.querySelectorAll('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.tab === activeTab));
+    if (activeTab === 'home' || activeTab === 'hustles') return renderHustles();
+    if (activeTab === 'challenge') return renderChallenge();
+    if (activeTab === 'district') return renderDistrict();
+    if (activeTab === 'prestige') return renderPrestige();
+  }
+
+  function renderHustles() {
+    const level = currentLevel();
+    el('sectionHeading').textContent = activeTab === 'home' ? 'Featured Hustles' : 'Upgrade Hustles';
+    content.innerHTML = '';
+    level.businesses.forEach(biz => {
+      const s = getBizState(biz);
+      const cost = getBizNextCost(biz);
+      const card = document.createElement('div');
+      card.className = 'card resource';
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+          <div>
+            <h3>${biz.name}</h3>
+            <div class="muted" style="font-size:.82rem;">${s.tier ? `${fmt(getBizIncome(biz))}/s` : 'Locked'} • Tier ${s.tier}/10</div>
+          </div>
+          <div class="tag ${s.tier>=10?'maxed':''}">${s.tier>=10?'MAXED':'Houston'}</div>
+        </div>
+        <div class="line"></div>
+        <div class="meta"><span>Next Cost</span><span class="mono">${cost == null ? '—' : fmt(cost)}</span></div>
+        <div class="btnrow">
+          <button class="small ${s.tier>=10?'good':'primary'}" ${cost==null || state.money < cost ? 'disabled':''} data-buy="${biz.id}">${s.tier===0?'Open Hustle': s.tier>=10 ? 'Maxed' : 'Upgrade'}</button>
+          <button class="small" disabled>${s.tier>=10? 'XP Claimed' : 'Max at Tier 10'}</button>
+        </div>`;
+      content.appendChild(card);
+    });
+
+    const tapCard = document.createElement('div');
+    tapCard.className = 'card resource';
+    tapCard.innerHTML = `
+      <h3>Quick Tap Money</h3>
+      <div class="muted">Small bonus only. Passive income still runs the town.</div>
+      <div class="line"></div>
+      <button class="primary" id="tapCashBtn">Tap for ${fmt(getTapValue())}</button>
+    `;
+    content.appendChild(tapCard);
+    content.querySelectorAll('[data-buy]').forEach(btn => btn.addEventListener('click', ()=> buyOrUpgrade(btn.dataset.buy)));
+    el('tapCashBtn').onclick = doTapCash;
+  }
+
+  function renderChallenge() {
+    const level = currentLevel();
+    el('sectionHeading').textContent = 'Challenge Gate';
+    content.innerHTML = '';
+    const card = document.createElement('div');
+    const unlocked = challengeUnlocked(level);
+    const cleared = miniCleared(level.id);
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="tag">Level ${level.id} Challenge</div>
+      <h3 style="margin:10px 0 6px;">${miniName(level.mini)}</h3>
+      <div class="muted">${miniDesc(level.mini)}</div>
+      <div class="line"></div>
+      <div class="stack">
+        <button class="${cleared?'good':'primary'}" id="launchMini" ${!unlocked || cleared ? 'disabled':''}>${cleared ? 'Challenge Cleared' : (unlocked ? 'Launch Challenge' : 'Locked')}</button>
+        <button class="warn" id="continueBtn" ${!cleared ? 'disabled':''}>${level.id===11?'Open Completion Choice':'Continue to Next Level'}</button>
+      </div>`;
+    content.appendChild(card);
+    el('launchMini').onclick = () => openMiniGame(level.mini);
+    el('continueBtn').onclick = () => levelUp();
+  }
+
+  function renderDistrict() {
+    const level = currentLevel();
+    el('sectionHeading').textContent = 'District Progress';
+    content.innerHTML = '';
+    levels.forEach(l => {
+      const card = document.createElement('div');
+      card.className = 'card resource';
+      const done = l.id < state.level || (l.id === state.level && miniCleared(l.id) && (l.id < 11 || state.sandbox));
+      const current = l.id === state.level;
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <div>
+            <h3>${l.id}. ${l.name}</h3>
+            <div class="muted">${l.blurb}</div>
+          </div>
+          <div class="tag ${done ? 'maxed' : ''}">${done ? 'Stamped' : current ? 'Current' : 'Locked'}</div>
+        </div>
+        <div class="line"></div>
+        <div class="tiny">${l.clear || 'Final crown level'}</div>`;
+      content.appendChild(card);
+    });
+  }
+
+  function renderPrestige() {
+    el('sectionHeading').textContent = 'New Game Plus';
+    content.innerHTML = '';
+    const nextNg = Math.min(5, state.ng + 1);
+    const unlocked = state.totalClears > state.ng;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="tag">${state.ng ? `Current: NG+${state.ng}` : 'Current: Base Run'}</div>
+      <h3 style="margin:10px 0 6px;">Run It Back</h3>
+      <div class="muted">Higher mini-game pressure. Faster rebuild. Max at NG+5.</div>
+      <div class="line"></div>
+      <div class="stack">
+        <div class="tiny">Next bonus: ${nextNg <=5 ? prestigeLabel(nextNg) : 'Max prestige reached'}</div>
+        <button class="hot" id="startNgBtn" ${!unlocked || state.ng>=5 ? 'disabled':''}>${state.ng>=5 ? 'NG+ Maxed' : `Start NG+${nextNg}`}</button>
+        <button class="danger" id="resetBtn">Hard Reset Save</button>
+      </div>`;
+    content.appendChild(card);
+    el('startNgBtn').onclick = () => {
+      if (!unlocked || state.ng >= 5) return;
+      if (confirm(`Start NG+${nextNg}? This resets money, levels, and hustles for a harder run.`)) {
+        resetForNG(nextNg);
+        render();
+      }
+    };
+    el('resetBtn').onclick = () => {
+      if (confirm('Wipe your whole save?')) {
+        resetForNG(0);
+        state.totalClears = 0;
+        save();
+        render();
+      }
+    };
+  }
+
+  function prestigeLabel(ng) {
+    const start = [0,12,25,40,60,85][ng];
+    const pass = [0,8,16,24,34,45][ng];
+    return `+${start}% starting cash • +${pass}% passive income`;
+  }
+
+  function recalcIncome() {
+    incomePerSec = levels.flatMap(l=>l.businesses).reduce((sum,b) => sum + getBizIncome(b), 0);
+  }
+
+  function getTapValue() {
+    const unlocked = levels.flatMap(l=>l.businesses).filter(b => getBizState(b).tier > 0);
+    if (!unlocked.length) return 1;
+    const lowest = Math.min(...unlocked.map(b => getBizIncome(b)));
+    return Math.max(1, Math.floor(lowest * 0.25));
+  }
+
+  let tapTimes = [];
+  function doTapCash(ev) {
+    const now = performance.now();
+    tapTimes = tapTimes.filter(t => now - t < 1000);
+    if (tapTimes.length >= 8) return;
+    tapTimes.push(now);
+    const gain = getTapValue();
+    state.money += gain;
+    save();
+    render();
+    spawnFloat(`+${fmt(gain).replace('$','$')}`, ev?.clientX, ev?.clientY);
+  }
+
+  function spawnFloat(text, x=app.clientWidth/2, y=200) {
+    const d = document.createElement('div');
+    d.className = 'floatingTap';
+    d.textContent = text;
+    const rect = app.getBoundingClientRect();
+    d.style.left = (x - rect.left) + 'px';
+    d.style.top = (y - rect.top) + 'px';
+    app.appendChild(d);
+    setTimeout(()=> d.remove(), 820);
+  }
+
+  el('heroTapZone').addEventListener('click', (e)=> doTapCash(e));
+  document.querySelectorAll('.navbtn').forEach(btn => btn.addEventListener('click', () => { activeTab = btn.dataset.tab; render(); }));
+  el('closeOverlay').onclick = closeOverlay;
+
+  function openOverlay(title, sub) {
+    overlayTitle.textContent = title;
+    overlaySub.textContent = sub;
+    overlay.classList.add('show');
+  }
+  function closeOverlay() {
+    overlay.classList.remove('show');
+    overlayContent.innerHTML = '';
+    if (miniCleanup) { try { miniCleanup(); } catch {} }
+    miniCleanup = null;
+    overlayMode = null;
+  }
+  function miniName(key) {
+    return {
+      foodtruck:'Food Truck Rush', cleanup:'Bayou Cleanup', traffic:'Traffic Weave', blackjack:'High Roller Hustle', streetbet:'Street Bet', neonpulse:'Neon Pulse', portload:'Port Loadout', storm:'Storm Surge', rocket:'Rocket Assembly', skylinehop:'Skyline Hop', empirenight:'Empire Night'
+    }[key];
+  }
+  function miniDesc(key) {
+    return {
+      foodtruck:'Fast reaction order taps.', cleanup:'Clear debris, dodge hazards.', traffic:'One-touch lane switching.', blackjack:'Simplified blackjack challenge.', streetbet:'Risk-reward cash-out clicker.', neonpulse:'Rhythm/beat tap timing.', portload:'Load in the right order.', storm:'Incremental chaos management.', rocket:'Memory sequence build.', skylinehop:'One-touch physics challenge.', empirenight:'Final remix boss.'
+    }[key];
+  }
+  function currentMiniConfig(key) {
+    const ng = state.ng;
+    switch(key) {
+      case 'foodtruck': return {goal:[12,13,14,15,16,17][ng], time:[30,28,26,24,22,20][ng], mistakes:[4,4,3,3,2,2][ng], decoys: ng>=3};
+      case 'cleanup': return {goal:[15,16,18,20,22,24][ng], time:[35,33,31,29,27,25][ng], hits:[3,3,3,2,2,1][ng]};
+      case 'traffic': return {time:[28,30,32,34,36,38][ng], crashes:[2,2,2,1,1,1][ng], speed:1+[0,.08,.14,.20,.26,.33][ng]};
+      case 'blackjack': return {wins:[3,3,4,4,5,5][ng], losses:[2,2,2,1,2,1][ng]};
+      case 'streetbet': return {target:[180,195,215,235,260,290][ng], round:[12,11.5,11,10.5,10,9.5][ng], bustBoost: [0,0,.02,.05,.08,.12][ng]};
+      case 'neonpulse': return {hits:[24,26,28,30,32,34][ng], pct:[.70,.72,.74,.76,.78,.80][ng], perfect:[120,110,100,90,80,70][ng]};
+      case 'portload': return {goal:[10,11,12,13,14,15][ng], time:[40,38,36,34,32,30][ng], bad:[3,3,3,2,2,1][ng]};
+      case 'storm': return {time:[40,42,44,46,48,50][ng], spawn:[2200,2100,2000,1800,1700,1500][ng], drain:[1.2,1.26,1.32,1.38,1.44,1.50][ng]};
+      case 'rocket': return {seqs:[[4,5,6],[4,5,6],[5,6,6],[5,6,7],[6,7,7],[6,7,8]][ng], preview:[750,700,650,600,520,450][ng]};
+      case 'skylinehop': return {gates:[14,15,16,18,20,22][ng], speed:1+[0,.08,.14,.20,.26,.33][ng], gap:[150,145,138,126,118,110][ng]};
+      case 'empirenight': return { traffic:[12,13,14,15,16,18][ng], rhythm:[10,11,12,13,14,16][ng], bet:[65,75,85,95,110,125][ng], hop:[6,7,8,9,10,12][ng], taps:[45,48,52,56,60,66][ng], tapTime:[10,10,10,9.5,9,8.5][ng] };
+    }
+  }
+
+  function markMiniWin() {
+    state.miniClears[currentLevel().id] = true;
+    save();
+    closeOverlay();
+    burstConfetti();
+    showToast('Challenge cleared');
+    activeTab = 'challenge';
+    render();
+  }
+
+  function openMiniGame(key) {
+    if (!challengeUnlocked(currentLevel())) return;
+    overlayMode = key;
+    if (miniCleanup) { try { miniCleanup(); } catch {} }
+    overlayContent.innerHTML = '';
+    openOverlay(miniName(key), miniDesc(key));
+    ({
+      foodtruck: miniFoodTruck,
+      cleanup: miniCleanupGame,
+      traffic: miniTraffic,
+      blackjack: miniBlackjack,
+      streetbet: miniStreetBet,
+      neonpulse: miniNeonPulse,
+      portload: miniPortLoad,
+      storm: miniStorm,
+      rocket: miniRocket,
+      skylinehop: miniSkylineHop,
+      empirenight: miniEmpireNight,
+    }[key])();
+  }
+
+  function timerCard(timeLeft, extra='') { return `<div class="card center"><div class="tiny">Time</div><div class="huge mono">${timeLeft.toFixed(1)}s</div><div class="tiny">${extra}</div></div>`; }
+  function statCard(label, value, extra='') { return `<div class="card center"><div class="tiny">${label}</div><div class="huge mono">${value}</div><div class="tiny">${extra}</div></div>`; }
+
+  function miniFoodTruck() {
+    const cfg = currentMiniConfig('foodtruck');
+    let score=0, mistakes=0, left=cfg.time;
+    const foods = ['Tacos','Wings','Tea','Fries'];
+    let target = foods[0];
+    overlayContent.innerHTML = `
+      <div class="grid2">${statCard('Correct',`<span id='ftScore'>0</span>`,`Goal ${cfg.goal}`)}${statCard('Mistakes',`<span id='ftMiss'>0</span>`,`Max ${cfg.mistakes}`)}</div>
+      <div style="height:10px"></div>${timerCard(left)}
+      <div class="card center" style="margin-top:10px;"><div class="tiny">Serve This Order</div><div class="huge" id="ftTarget">${target}</div></div>
+      <div class="grid2" style="margin-top:10px;" id="ftBtns"></div>`;
+    const btns = el('ftBtns');
+    function reroll() {
+      target = foods[Math.floor(Math.random()*foods.length)];
+      if (cfg.decoys && Math.random() < .35) target = ['Tacos','Wings','Tea','Fries','Fake Ticket'][Math.floor(Math.random()*5)];
+      el('ftTarget').textContent = target;
+      btns.innerHTML = '';
+      foods.concat(cfg.decoys ? ['Fake Ticket'] : []).sort(()=> Math.random()-.5).forEach(f => {
+        const b = document.createElement('button');
+        b.className = 'orderBtn ' + (f==='Fake Ticket' ? 'danger' : 'primary');
+        b.textContent = f;
+        b.onclick = () => {
+          if (f === target && f !== 'Fake Ticket') score++; else mistakes++;
+          el('ftScore').textContent = score; el('ftMiss').textContent = mistakes;
+          if (score >= cfg.goal) return markMiniWin();
+          if (mistakes > cfg.mistakes) return fail('Too many wrong orders');
+          reroll();
+        };
+        btns.appendChild(b);
+      });
+    }
+    reroll();
+    const int = setInterval(()=> {
+      left -= .1;
+      overlayContent.querySelector('.mono').innerHTML = left.toFixed(1) + 's';
+      if (left <= 0) fail('Clock ran out');
+    }, 100);
+    function fail(msg) { clearInterval(int); showRetry(msg, ()=> miniFoodTruck()); }
+    miniCleanup = ()=> clearInterval(int);
+  }
+
+  function miniCleanupGame() {
+    const cfg = currentMiniConfig('cleanup');
+    let score=0, hits=0, left=cfg.time;
+    overlayContent.innerHTML = `<div class="grid2">${statCard('Cleared',`<span id='clScore'>0</span>`,`Goal ${cfg.goal}`)}${statCard('Hazard Hits',`<span id='clHits'>0</span>`,`Max ${cfg.hits}`)}</div>
+    <div style="height:10px"></div>${timerCard(left)}
+    <div id="cleanupArea" class="card" style="height:370px; position:relative; overflow:hidden; margin-top:10px;"></div>`;
+    const area = el('cleanupArea');
+    function spawn() {
+      const item = document.createElement('button');
+      const hazard = Math.random() < (.2 + state.ng*0.05);
+      item.className = 'small issueBtn ' + (hazard ? 'danger' : 'good');
+      item.textContent = hazard ? '🧪' : ['🧴','🧻','🥤','🪵'][Math.floor(Math.random()*4)];
+      item.style.position='absolute';
+      item.style.left = Math.random()*78 + '%';
+      item.style.top = Math.random()*84 + '%';
+      item.onclick = ()=> {
+        if (hazard) hits++; else score++;
+        item.remove();
+        el('clScore').textContent = score; el('clHits').textContent = hits;
+        if (score >= cfg.goal) markMiniWin();
+        if (hits > cfg.hits) fail('Too many hazard hits');
+      };
+      area.appendChild(item);
+      setTimeout(()=> item.remove(), 2200 - state.ng*180);
+    }
+    const spawner = setInterval(spawn, 650 - state.ng*40);
+    const timer = setInterval(()=> {
+      left -= .1;
+      overlayContent.querySelector('.mono').innerHTML = left.toFixed(1) + 's';
+      if (left <= 0) fail('Cleanup time expired');
+    }, 100);
+    function fail(msg) { clearInterval(spawner); clearInterval(timer); showRetry(msg, ()=> miniCleanupGame()); }
+    miniCleanup = ()=> { clearInterval(spawner); clearInterval(timer); };
+  }
+
+  function miniTraffic() {
+    const cfg = currentMiniConfig('traffic');
+    overlayContent.innerHTML = `<div class="grid2">${statCard('Survive',`<span id='trTime'>${cfg.time.toFixed(1)}</span>`,`seconds`)}${statCard('Crashes',`<span id='trCrash'>0</span>`,`Max ${cfg.crashes}`)}</div>
+    <canvas id="trafficCanvas" width="420" height="520" style="margin-top:10px;height:420px"></canvas>
+    <div class="grid2" style="margin-top:10px;"><button id="laneL">Left</button><button id="laneR">Right</button></div>`;
+    const c = el('trafficCanvas'), ctx = c.getContext('2d');
+    let lane=1, crashes=0, left=cfg.time;
+    const player = {w:70,h:90,y:410};
+    const lanes = [75,175,275];
+    const obs=[];
+    const laneBtn = dir => { lane = Math.max(0, Math.min(2, lane+dir)); };
+    el('laneL').onclick = ()=> laneBtn(-1); el('laneR').onclick = ()=> laneBtn(1);
+    const spawnI = setInterval(()=> obs.push({lane:Math.floor(Math.random()*3), y:-100, h:100}), 900/cfg.speed);
+    let raf;
+    function loop() {
+      ctx.clearRect(0,0,c.width,c.height);
+      ctx.fillStyle='#202733'; ctx.fillRect(40,0,340,520);
+      ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.setLineDash([16,16]);
+      [140,240].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,520); ctx.stroke(); });
+      ctx.setLineDash([]);
+      ctx.fillStyle='#3dd6ff'; ctx.fillRect(lanes[lane], player.y, player.w, player.h);
+      for (let i=obs.length-1;i>=0;i--) {
+        const o=obs[i]; o.y += 6*cfg.speed;
+        ctx.fillStyle='#ff5f72'; ctx.fillRect(lanes[o.lane], o.y, 70, o.h);
+        if (o.lane===lane && o.y+o.h > player.y && o.y < player.y+player.h) {
+          obs.splice(i,1); crashes++; el('trCrash').textContent = crashes;
+          if (crashes > cfg.crashes) return fail('Too many crashes');
+        } else if (o.y > 530) obs.splice(i,1);
+      }
+      left -= 1/60; el('trTime').textContent = Math.max(0,left).toFixed(1);
+      if (left <= 0) return markMiniWin();
+      raf = requestAnimationFrame(loop);
+    }
+    loop();
+    function fail(msg){ cancelAnimationFrame(raf); clearInterval(spawnI); showRetry(msg, ()=> miniTraffic()); }
+    miniCleanup = ()=> { cancelAnimationFrame(raf); clearInterval(spawnI); };
+  }
+
+  function miniBlackjack() {
+    const cfg = currentMiniConfig('blackjack');
+    let wins=0, losses=0;
+    overlayContent.innerHTML = `<div class="grid2">${statCard('Wins',`<span id='bjWins'>0</span>`,`Need ${cfg.wins}`)}${statCard('Losses',`<span id='bjLosses'>0</span>`,`Max ${cfg.losses}`)}</div>
+    <div class="card" style="margin-top:10px;">
+      <div class="tiny">Dealer</div><div class="cards" id="dealer"></div><div class="muted" id="dealerScore"></div>
+      <div class="line"></div>
+      <div class="tiny">You</div><div class="cards" id="player"></div><div class="muted" id="playerScore"></div>
+      <div class="line"></div>
+      <div class="grid2"><button id="hitBtn" class="primary">Hit</button><button id="standBtn" class="warn">Stand</button></div>
+      <div class="center" style="margin-top:10px;font-weight:800;" id="bjStatus">New hand</div>
+    </div>`;
+    const suits=['♠','♥','♦','♣'];
+    const ranks=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    let deck=[], dealer=[], player=[], handLive=true;
+    function newDeck(){ deck=[]; suits.forEach(s=>ranks.forEach(r=>deck.push({r,s}))); deck.sort(()=>Math.random()-.5); }
+    function draw(arr){ arr.push(deck.pop()); }
+    function score(arr){
+      let total=0, aces=0;
+      arr.forEach(c=> { if (c.r==='A') { total+=11; aces++; } else if (['J','Q','K'].includes(c.r)) total+=10; else total+=Number(c.r); });
+      while (total>21 && aces--) total-=10;
+      return total;
+    }
+    function renderCards() {
+      const renderTo = (id, arr, hideSecond=false)=> {
+        const root = el(id); root.innerHTML='';
+        arr.forEach((c,i)=> {
+          const d = document.createElement('div');
+          d.className = 'playingCard ' + ((c.s==='♥'||c.s==='♦')?'red':'');
+          d.textContent = hideSecond && i===1 && handLive ? '🂠' : `${c.r}${c.s}`;
+          root.appendChild(d);
+        });
+      };
+      renderTo('dealer', dealer, true);
+      renderTo('player', player, false);
+      el('playerScore').textContent = `Score: ${score(player)}`;
+      el('dealerScore').textContent = handLive ? 'Score: ?' : `Score: ${score(dealer)}`;
+    }
+    function startHand() {
+      handLive = true; newDeck(); dealer=[]; player=[];
+      draw(player); draw(dealer); draw(player); draw(dealer);
+      renderCards(); el('bjStatus').textContent = 'Hit or stand';
+      if (score(player) === 21) settle();
+    }
+    function settle() {
+      handLive = false;
+      while (score(dealer) < 17) draw(dealer);
+      renderCards();
+      const ps=score(player), ds=score(dealer);
+      let msg='';
+      if (ps>21) { losses++; msg='Bust. Hand lost.'; }
+      else if (ds>21 || ps>ds) { wins++; msg='You took the hand.'; }
+      else if (ps<ds) { losses++; msg='Dealer got you.'; }
+      else { msg='Push. Run it again.'; }
+      el('bjWins').textContent=wins; el('bjLosses').textContent=losses; el('bjStatus').textContent=msg;
+      if (wins >= cfg.wins) return setTimeout(markMiniWin, 700);
+      if (losses >= cfg.losses) return setTimeout(()=> fail('Table turned cold'), 700);
+      setTimeout(startHand, 900);
+    }
+    el('hitBtn').onclick = ()=> { if (!handLive) return; draw(player); renderCards(); if (score(player)>=21) settle(); };
+    el('standBtn').onclick = ()=> { if (!handLive) return; settle(); };
+    startHand();
+    function fail(msg){ showRetry(msg, ()=> miniBlackjack()); }
+    miniCleanup = ()=> {};
+  }
+
+  function miniStreetBet() {
+    const cfg = currentMiniConfig('streetbet');
+    let bank=0, round=1, mult=1, left=cfg.round, busted=false;
+    overlayContent.innerHTML = `<div class="grid2">${statCard('Banked',`<span id='sbBank'>0</span>`,`Goal ${cfg.target}`)}${statCard('Round',`<span id='sbRound'>1</span>`,`of 3`)}</div>
+      <div style="height:10px"></div>${timerCard(left,'Cash out before you bust')}
+      <div class="card center" style="margin-top:10px;"><div class="tiny">Multiplier</div><div class="huge mono" id="sbMult">x1.00</div><div class="tiny" id="sbWarn">Safe zone</div></div>
+      <div class="grid2" style="margin-top:10px;"><button id="bankBtn" class="good">Bank Now</button><button id="holdBtn" class="hot">Let It Ride</button></div>`;
+    const timer = setInterval(()=> {
+      left -= .05;
+      mult += 0.03 + state.ng*0.004;
+      const bustChance = Math.max(0, (mult-1.8)*0.012 + cfg.bustBoost);
+      if (Math.random() < bustChance*0.35) busted = true;
+      el('sbMult').textContent = 'x' + mult.toFixed(2);
+      el('sbWarn').textContent = mult < 2 ? 'Safe zone' : mult < 3.5 ? 'Risk climbing' : mult < 5 ? 'Danger zone' : 'Greed mode';
+      overlayContent.querySelector('.mono').innerHTML = left.toFixed(1)+'s';
+      if (busted || left <= 0) bust();
+    }, 50);
+    function nextRound() {
+      if (bank >= cfg.target) { clearInterval(timer); return markMiniWin(); }
+      if (round >= 3) { clearInterval(timer); return fail('Did not bank enough'); }
+      round++; left = cfg.round; mult = 1; busted = false;
+      el('sbRound').textContent = round;
+    }
+    function bust() { busted=false; mult=1; if (round >= 3 && bank < cfg.target) { clearInterval(timer); return fail('You got too greedy'); } nextRound(); }
+    el('bankBtn').onclick = ()=> { bank += Math.round(40 * mult); el('sbBank').textContent = bank; nextRound(); };
+    el('holdBtn').onclick = ()=> {};
+    function fail(msg){ showRetry(msg, ()=> miniStreetBet()); }
+    miniCleanup = ()=> clearInterval(timer);
+  }
+
+  function miniNeonPulse() {
+    const cfg = currentMiniConfig('neonpulse');
+    let hits=0, good=0, total=0;
+    let targetTime = performance.now() + 1500;
+    overlayContent.innerHTML = `<div class="grid2">${statCard('Hits',`<span id='npHits'>0</span>`,`Need ${cfg.hits}`)}${statCard('Accuracy',`<span id='npAcc'>100</span>%`,`Need ${(cfg.pct*100)|0}%`)}</div>
+      <div class="card center" style="margin-top:10px;"><div class="tiny">Tap on the beat when the ring flashes</div><div id="pulseRing" style="margin:14px auto; width:180px; height:180px; border-radius:999px; border:8px solid rgba(61,214,255,.35); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.2rem;">WAIT</div></div>
+      <button id="pulseBtn" class="pulseBtn primary" style="margin-top:10px; width:100%;">TAP THE BEAT</button>`;
+    const ring = el('pulseRing');
+    let raf;
+    function update() {
+      const now = performance.now();
+      const diff = targetTime - now;
+      if (diff <= -500) targetTime = now + 1200 - state.ng*50;
+      const active = Math.abs(diff) <= cfg.perfect;
+      ring.style.transform = `scale(${active?1.1:1})`;
+      ring.style.borderColor = active ? 'rgba(255,79,216,.95)' : 'rgba(61,214,255,.35)';
+      ring.textContent = active ? 'NOW' : 'WAIT';
+      raf = requestAnimationFrame(update);
+    }
+    update();
+    el('pulseBtn').onclick = ()=> {
+      const now = performance.now();
+      const miss = Math.abs(now - targetTime);
+      total++;
+      if (miss <= cfg.perfect*1.8) { good++; hits++; }
+      else if (state.ng >= 3 && Math.random() < .12) { }
+      el('npHits').textContent = hits;
+      el('npAcc').textContent = Math.round((good / total) * 100);
+      if (hits >= cfg.hits && good / total >= cfg.pct) return markMiniWin();
+      if (total >= cfg.hits + 8 && good / Math.max(1,total) < cfg.pct*0.75) return fail('Off beat too much');
+    };
+    function fail(msg){ cancelAnimationFrame(raf); showRetry(msg, ()=> miniNeonPulse()); }
+    miniCleanup = ()=> cancelAnimationFrame(raf);
+  }
+
+  function miniPortLoad() {
+    const cfg = currentMiniConfig('portload');
+    let need=1, bad=0, left=cfg.time;
+    overlayContent.innerHTML = `<div class="grid2">${statCard('Next Cargo',`<span id='plNeed'>1</span>`,`Goal ${cfg.goal}`)}${statCard('Misloads',`<span id='plBad'>0</span>`,`Max ${cfg.bad}`)}</div>
+      <div style="height:10px"></div>${timerCard(left)}
+      <div class="grid3" id="cargoGrid" style="margin-top:10px;"></div>`;
+    function refill() {
+      const grid = el('cargoGrid'); grid.innerHTML='';
+      const nums = Array.from({length:6}, (_,i)=> i+1).sort(()=> Math.random()-.5);
+      nums.forEach(n => {
+        const b = document.createElement('button');
+        b.className = 'cargoBtn ' + (n===need ? 'good' : 'primary');
+        b.textContent = 'CARGO ' + n;
+        b.onclick = ()=> {
+          if (n===need) {
+            need++;
+            el('plNeed').textContent = need;
+            if (need > cfg.goal) return markMiniWin();
+            refill();
+          } else {
+            bad++; el('plBad').textContent = bad;
+            if (bad > cfg.bad) return fail('Misloaded too many containers');
+          }
+        };
+        grid.appendChild(b);
+      });
+    }
+    refill();
+    const timer = setInterval(()=> {
+      left -= .1; overlayContent.querySelector('.mono').innerHTML = left.toFixed(1)+'s'; if (left <= 0) fail('Port clock expired');
+    },100);
+    function fail(msg){ clearInterval(timer); showRetry(msg, ()=> miniPortLoad()); }
+    miniCleanup = ()=> clearInterval(timer);
+  }
+
+  function miniStorm() {
+    const cfg = currentMiniConfig('storm');
+    let stability=100, left=cfg.time;
+    overlayContent.innerHTML = `<div class="grid2">${statCard('Stability',`<span id='stStab'>100</span>`,`keep above 0`)}${timerCard(left)}</div>
+      <div class="card" style="margin-top:10px;"><div class="barwrap" style="height:16px;"><div class="bar" id="stBar" style="width:100%; background:linear-gradient(90deg,#35d07f,#ffcf4a,#ff5f72)"></div></div><div class="tiny" style="margin-top:8px;">Tap issues before they stack up.</div></div>
+      <div id="stormArea" class="card" style="height:360px; position:relative; overflow:hidden; margin-top:10px;"></div>`;
+    const area = el('stormArea');
+    const issues = [];
+    function spawnIssue() {
+      const id = Math.random().toString(36).slice(2);
+      const type = ['Board','Power','Drop'][Math.floor(Math.random()*3)];
+      const b = document.createElement('button');
+      b.className = 'issueBtn ' + (type==='Power' ? 'warn' : type==='Drop' ? 'hot' : 'primary');
+      b.textContent = type;
+      b.style.position='absolute';
+      b.style.left = Math.random()*75 + '%';
+      b.style.top = Math.random()*80 + '%';
+      b.onclick = ()=> { const idx=issues.findIndex(x=>x.id===id); if (idx>=0) issues.splice(idx,1); b.remove(); };
+      issues.push({id,b}); area.appendChild(b);
+      if (state.ng >= 4 && Math.random() < .18) {
+        const fake = document.createElement('button'); fake.className='issueBtn danger'; fake.textContent='Fake'; fake.style.position='absolute'; fake.style.left=Math.random()*75+'%'; fake.style.top=Math.random()*80+'%'; fake.onclick=()=> fake.remove(); area.appendChild(fake); setTimeout(()=> fake.remove(), 1800);
+      }
+      setTimeout(()=> b.remove(), 3200);
+    }
+    const spawnI = setInterval(spawnIssue, cfg.spawn);
+    const timer = setInterval(()=> {
+      left -= .1;
+      stability -= cfg.drain * 0.1;
+      stability -= issues.length * 0.4;
+      el('stStab').textContent = Math.max(0, Math.round(stability));
+      el('stBar').style.width = Math.max(0, stability)+'%';
+      overlayContent.querySelectorAll('.mono')[1].innerHTML = left.toFixed(1)+'s';
+      if (stability <= 0) fail('Storm took the board');
+      if (left <= 0) markMiniWin();
+    },100);
+    function fail(msg){ clearInterval(spawnI); clearInterval(timer); showRetry(msg, ()=> miniStorm()); }
+    miniCleanup = ()=> { clearInterval(spawnI); clearInterval(timer); };
+  }
+
+  function miniRocket() {
+    const cfg = currentMiniConfig('rocket');
+    let stage=0, sequence=[], input=[], lock=false;
+    overlayContent.innerHTML = `<div class="card center"><div class="tiny">Sequence Stage</div><div class="huge"><span id="rkStage">1</span> / 3</div><div class="muted">Repeat the ignition order</div></div>
+      <div class="grid2" id="rocketGrid" style="margin-top:10px;"></div>`;
+    const colors = ['A','B','C','D'];
+    const grid = el('rocketGrid');
+    colors.forEach(c => {
+      const b = document.createElement('button');
+      b.className='rocketBtn primary'; b.id='rk'+c; b.textContent='Module '+c;
+      b.onclick = ()=> {
+        if (lock) return;
+        flash(c, true);
+        input.push(c);
+        const idx = input.length - 1;
+        if (input[idx] !== sequence[idx]) return fail('Wrong assembly order');
+        if (input.length === sequence.length) {
+          stage++; if (stage >= 3) return markMiniWin();
+          el('rkStage').textContent = stage + 1;
+          setTimeout(nextRound, 450);
+        }
+      };
+      grid.appendChild(b);
+    });
+    function flash(c, quick=false) {
+      const node = el('rk'+c); node.classList.add('hot'); setTimeout(()=> node.classList.remove('hot'), quick ? 180 : 320);
+    }
+    function nextRound() {
+      input=[]; sequence=[]; lock=true;
+      const len = cfg.seqs[stage];
+      for (let i=0;i<len;i++) sequence.push(colors[Math.floor(Math.random()*colors.length)]);
+      let i=0;
+      const int = setInterval(()=> {
+        flash(sequence[i]); i++;
+        if (i >= sequence.length) { clearInterval(int); lock=false; }
+      }, cfg.preview);
+    }
+    nextRound();
+    function fail(msg){ showRetry(msg, ()=> miniRocket()); }
+    miniCleanup = ()=> {};
+  }
+
+  function miniSkylineHop() {
+    const cfg = currentMiniConfig('skylinehop');
+    overlayContent.innerHTML = `<div class="grid2">${statCard('Gates',`<span id='shGate'>0</span>`,`Need ${cfg.gates}`)}${statCard('Tap',`↑`,`Stay in the gap`)}</div>
+      <canvas id="hopCanvas" width="420" height="520" style="margin-top:10px;height:430px"></canvas>
+      <button id="hopTap" class="primary" style="margin-top:10px; width:100%;">TAP TO BOOST</button>`;
+    const c = el('hopCanvas'), ctx = c.getContext('2d');
+    let y=230, vy=0, gravity=0.45, impulse=-7.4, x=90, passed=0;
+    const pipes=[]; let raf;
+    function tap(){ vy = impulse; }
+    el('hopTap').onclick = tap; c.onclick = tap;
+    const spawnI = setInterval(()=> {
+      const gapY = 90 + Math.random()*260;
+      pipes.push({x:420, gapY, gap:cfg.gap, passed:false});
+    }, 1300 / cfg.speed);
+    function loop() {
+      ctx.clearRect(0,0,c.width,c.height);
+      ctx.fillStyle='#152033'; ctx.fillRect(0,0,420,520);
+      vy += gravity; y += vy;
+      ctx.fillStyle='#f4c15d'; ctx.beginPath(); ctx.arc(x,y,16,0,Math.PI*2); ctx.fill();
+      for (let i=pipes.length-1;i>=0;i--) {
+        const p=pipes[i]; p.x -= 3.2*cfg.speed;
+        ctx.fillStyle='#35d07f';
+        ctx.fillRect(p.x,0,44,p.gapY - p.gap/2);
+        ctx.fillRect(p.x,p.gapY + p.gap/2,44,520);
+        if (!p.passed && p.x + 44 < x) { p.passed = true; passed++; el('shGate').textContent = passed; if (passed >= cfg.gates) return markMiniWin(); }
+        if (x+16 > p.x && x-16 < p.x+44 && (y-16 < p.gapY-p.gap/2 || y+16 > p.gapY+p.gap/2)) return fail('Clipped the skyline');
+        if (p.x < -60) pipes.splice(i,1);
+      }
+      if (y < 0 || y > 520) return fail('Could not hold altitude');
+      raf = requestAnimationFrame(loop);
+    }
+    loop();
+    function fail(msg){ cancelAnimationFrame(raf); clearInterval(spawnI); showRetry(msg, ()=> miniSkylineHop()); }
+    miniCleanup = ()=> { cancelAnimationFrame(raf); clearInterval(spawnI); };
+  }
+
+  function miniEmpireNight() {
+    const cfg = currentMiniConfig('empirenight');
+    let phase = 0;
+    const phases = [
+      () => empireTraffic(cfg.traffic, ()=> next()),
+      () => empireRhythm(cfg.rhythm, ()=> next()),
+      () => empireBet(cfg.bet, ()=> next()),
+      () => empireHop(cfg.hop, ()=> next()),
+      () => empireCash(cfg.taps, cfg.tapTime, ()=> markMiniWin()),
+    ];
+    function next() { phase++; if (phase >= phases.length) return markMiniWin(); phases[phase](); }
+    phases[0]();
+  }
+
+  function empireFrame(title, body) {
+    overlayContent.innerHTML = `<div class="card center"><div class="tag">Empire Night</div><h2 style="margin:8px 0 6px;">${title}</h2><div class="muted">${body}</div></div><div id="empWrap" style="margin-top:10px;"></div>`;
+  }
+  function empireTraffic(time, done) {
+    empireFrame('Traffic Phase', 'One mistake max. Stay alive.');
+    const wrap = el('empWrap');
+    wrap.innerHTML = `<canvas id="etCanvas" width="420" height="480" style="height:390px"></canvas><div class="grid2" style="margin-top:10px;"><button id="etl">Left</button><button id="etr">Right</button></div>`;
+    const c = el('etCanvas'), ctx = c.getContext('2d');
+    let lane=1, left=time, hit=0; const lanes=[75,175,275], obs=[]; let raf;
+    el('etl').onclick=()=> lane=Math.max(0,lane-1); el('etr').onclick=()=> lane=Math.min(2,lane+1);
+    const sp = setInterval(()=> obs.push({lane:Math.floor(Math.random()*3),y:-90}), 750 - state.ng*40);
+    function loop(){
+      ctx.clearRect(0,0,420,480); ctx.fillStyle='#161e2c'; ctx.fillRect(40,0,340,480); ctx.fillStyle='#3dd6ff'; ctx.fillRect(lanes[lane],380,70,80);
+      for(let i=obs.length-1;i>=0;i--){ const o=obs[i]; o.y += 6 + state.ng; ctx.fillStyle='#ff5f72'; ctx.fillRect(lanes[o.lane],o.y,70,90); if (o.lane===lane && o.y+90>380 && o.y<460){ hit++; return fail('Traffic phase failed'); } if(o.y>500) obs.splice(i,1);} left -= 1/60; if(left<=0){ clearInterval(sp); cancelAnimationFrame(raf); return done(); } raf=requestAnimationFrame(loop); }
+    loop();
+    function fail(msg){ clearInterval(sp); cancelAnimationFrame(raf); showRetry(msg, ()=> miniEmpireNight()); }
+    miniCleanup = ()=> { clearInterval(sp); cancelAnimationFrame(raf); };
+  }
+  function empireRhythm(hitsNeed, done){
+    empireFrame('Rhythm Phase', 'Catch the beat and keep it clean.');
+    const wrap = el('empWrap'); wrap.innerHTML = `<div class="grid2">${statCard('Hits',`<span id='erHits'>0</span>`,`Need ${hitsNeed}`)}${statCard('Taps',`<span id='erTotal'>0</span>`,`keep it clean`)}</div><div class="card center" style="margin-top:10px;"><div id="erRing" style="margin:10px auto; width:170px; height:170px; border-radius:999px; border:8px solid rgba(255,79,216,.6); display:flex;align-items:center;justify-content:center;">WAIT</div></div><button id="erTap" class="primary" style="margin-top:10px; width:100%;">TAP</button>`;
+    let hits=0,total=0,target=performance.now()+1200, raf;
+    function loop(){ const diff=Math.abs(performance.now()-target); const active=diff<90-state.ng*6; el('erRing').textContent=active?'NOW':'WAIT'; if (performance.now()-target>500) target=performance.now()+1100-state.ng*45; raf=requestAnimationFrame(loop);} loop();
+    el('erTap').onclick=()=>{ total++; if (Math.abs(performance.now()-target) < 180-state.ng*8) hits++; el('erHits').textContent=hits; el('erTotal').textContent=total; if(hits>=hitsNeed) { cancelAnimationFrame(raf); return done(); } if(total>hitsNeed+6 && hits/total<.68) { cancelAnimationFrame(raf); return showRetry('Rhythm phase slipped', ()=> miniEmpireNight()); }};
+    miniCleanup = ()=> cancelAnimationFrame(raf);
+  }
+  function empireBet(target, done){
+    empireFrame('Risk Phase', 'Bank enough in one short burst.');
+    const wrap = el('empWrap'); wrap.innerHTML = `<div class="grid2">${statCard('Target',target,'points')}${timerCard(7.5)}</div><div class="card center" style="margin-top:10px;"><div class="tiny">Multiplier</div><div class="huge mono" id="ebMult">x1.00</div><div class="tiny" id="ebBanked">Banked 0</div></div><button id="ebBank" class="good" style="margin-top:10px; width:100%;">BANK IT</button>`;
+    let mult=1, banked=0, left=7.5, t;
+    t=setInterval(()=>{ mult += .05 + state.ng*.006; left -= .05; el('ebMult').textContent='x'+mult.toFixed(2); wrap.querySelector('.mono').innerHTML=left.toFixed(1)+'s'; if(Math.random() < Math.max(0,(mult-2)*0.018)) return fail('Risk phase busted'); if(left<=0) fail('You hesitated too long'); },50);
+    el('ebBank').onclick=()=>{ banked=Math.round(35*mult); el('ebBanked').textContent='Banked '+banked; clearInterval(t); banked>=target ? done() : fail('Not enough banked'); };
+    function fail(msg){ clearInterval(t); showRetry(msg, ()=> miniEmpireNight()); }
+    miniCleanup = ()=> clearInterval(t);
+  }
+  function empireHop(gates, done){
+    empireFrame('Skyline Phase', 'Hold the line through the glass towers.');
+    const wrap = el('empWrap'); wrap.innerHTML = `<div class="grid2">${statCard('Gates',`<span id='ehG'>0</span>`,`Need ${gates}`)}${statCard('Tap','↑','boost')}</div><canvas id="ehCanvas" width="420" height="460" style="margin-top:10px;height:370px"></canvas><button id="ehTap" class="primary" style="margin-top:10px; width:100%;">TAP</button>`;
+    const c=el('ehCanvas'), ctx=c.getContext('2d'); let y=220,vy=0, passed=0, raf; const pipes=[]; const gap=125-state.ng*5; const speed=3.5+state.ng*.4;
+    function tap(){ vy=-7.2; }
+    el('ehTap').onclick=tap; c.onclick=tap;
+    const sp=setInterval(()=> pipes.push({x:420,gapY:100+Math.random()*230,passed:false}), 1200-state.ng*70);
+    function loop(){ ctx.clearRect(0,0,420,460); ctx.fillStyle='#151b25'; ctx.fillRect(0,0,420,460); vy+=.45; y+=vy; ctx.fillStyle='#f4c15d'; ctx.beginPath(); ctx.arc(90,y,16,0,Math.PI*2); ctx.fill(); for(let i=pipes.length-1;i>=0;i--){ const p=pipes[i]; p.x-=speed; ctx.fillStyle='#35d07f'; ctx.fillRect(p.x,0,40,p.gapY-gap/2); ctx.fillRect(p.x,p.gapY+gap/2,40,460); if(!p.passed && p.x+40<90){ p.passed=true; passed++; el('ehG').textContent=passed; if(passed>=gates){ clearInterval(sp); cancelAnimationFrame(raf); return done(); } } if(90+16>p.x && 90-16<p.x+40 && (y-16<p.gapY-gap/2 || y+16>p.gapY+gap/2)) return fail('Skyline clipped you'); if(p.x<-50) pipes.splice(i,1);} if(y<0||y>460) return fail('Lost the hop'); raf=requestAnimationFrame(loop);} loop();
+    function fail(msg){ clearInterval(sp); cancelAnimationFrame(raf); showRetry(msg, ()=> miniEmpireNight()); }
+    miniCleanup = ()=> { clearInterval(sp); cancelAnimationFrame(raf); };
+  }
+  function empireCash(tapsNeed, tapTime, done){
+    empireFrame('Cashout Phase', 'Empty the register before the night closes.');
+    const wrap = el('empWrap'); wrap.innerHTML = `<div class="grid2">${statCard('Taps',`<span id='ecT'>0</span>`,`Need ${tapsNeed}`)}${timerCard(tapTime)}</div><button id="ecBtn" class="hot" style="margin-top:12px; width:100%; min-height:130px; font-size:1.3rem;">CASH OUT</button>`;
+    let taps=0, left=tapTime;
+    const btn=el('ecBtn'); btn.onclick=()=>{ taps++; el('ecT').textContent=taps; if(taps>=tapsNeed){ clearInterval(t); return done(); } };
+    const t=setInterval(()=>{ left-=.1; wrap.querySelector('.mono').innerHTML=left.toFixed(1)+'s'; if(left<=0){ clearInterval(t); showRetry('Cashout phase came up short', ()=> miniEmpireNight()); } },100);
+    miniCleanup = ()=> clearInterval(t);
+  }
+
+  function showRetry(msg, retryFn) {
+    overlayContent.innerHTML = `<div class="card center"><div class="huge">Challenge Failed</div><div class="muted" style="margin-top:8px;">${msg}</div><div class="grid2" style="margin-top:14px;"><button class="primary" id="retryBtn">Retry</button><button id="backBtn">Back</button></div></div>`;
+    el('retryBtn').onclick = retryFn;
+    el('backBtn').onclick = closeOverlay;
+    miniCleanup = null;
+  }
+
+  function showCompletionPopup() {
+    openOverlay('Congratulations', state.ng >=5 ? 'Hustle Town Legend' : 'Hustle Town Crown Claimed');
+    const body = state.ng >=5 ?
+      `You ran the city at its hardest and still came out on top. That ain’t a hot streak. That’s you for real. From the block to the skyline, from late-night plays to big-dog pressure, you stood on business the whole way through. Houston gon’ remember this one.` :
+      `You came up from the bottom, got your motion right, and ran Houston all the way up. From the bayou to the skyline, you stamped your name on the city. Real question is... you finna sit on that crown, or run it back and prove it wasn’t luck?`;
+    const nextNg = Math.min(5, state.ng+1);
+    overlayContent.innerHTML = `<div class="card center"><div class="huge">${state.ng>=5 ? 'Hustle Town Legend' : 'Hustle Town Crown Claimed'}</div><div class="muted" style="margin-top:10px;">${body}</div><div class="grid2" style="margin-top:16px;"><button id="keepBtn">Continue Current Game</button><button class="hot" id="ngBtn">${state.ng>=5 ? 'Start Fresh Run' : `Start NG+${nextNg}`}</button></div></div>`;
+    el('keepBtn').onclick = ()=> { closeOverlay(); activeTab='prestige'; render(); };
+    el('ngBtn').onclick = ()=> { closeOverlay(); if (state.ng>=5) { state.totalClears = 0; resetForNG(0); } else { resetForNG(nextNg); } render(); };
+  }
+
+  function fetchWeatherFlavor() {
+    const cachedAt = localStorage.getItem('d_hustle_town_weather_at');
+    if (cachedAt && Date.now() - Number(cachedAt) < 1000*60*60*3) {
+      state.lastWeather = localStorage.getItem('d_hustle_town_weather_text') || 'Houston Vibes';
+      return render();
+    }
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=29.7604&longitude=-95.3698&current=temperature_2m,weather_code';
+    fetch(url).then(r=>r.json()).then(data => {
+      const temp = data?.current?.temperature_2m;
+      const code = data?.current?.weather_code;
+      let txt = 'Houston Vibes';
+      if (temp >= 33) txt = 'Heat advisory boost';
+      else if ([51,53,55,61,63,65,80,81,82].includes(code)) txt = 'Rain on the south side';
+      else if ([95,96,99].includes(code)) txt = 'Storm watch live';
+      else txt = 'Clear city money';
+      state.lastWeather = txt;
+      localStorage.setItem('d_hustle_town_weather_at', Date.now());
+      localStorage.setItem('d_hustle_town_weather_text', txt);
+      save(); render();
+    }).catch(()=>{});
+  }
+
+  setInterval(()=> {
+    recalcIncome();
+    state.money = moneyNum(state.money + incomePerSec / 10);
+    save();
+    if (!overlay.classList.contains('show')) render(); else { el('moneyChip').textContent = fmt(state.money); el('incomeChip').textContent = `${fmt(incomePerSec)}/s`; }
+  }, 100);
+
+  fetchWeatherFlavor();
+  render();
+})();
+</script>
+</body>
+</html>
