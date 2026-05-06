@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>D$: Hustle Town V3</title>
+<style>
+:root{
+  --bg:#070b11; --bg2:#0b1018; --panel:rgba(12,18,28,.86); --panel-2:rgba(21,30,46,.82); --line:rgba(255,255,255,.08);
+  --text:#f5f7fe; --muted:#9aa6be; --cyan:#47d7ff; --blue:#2291ff; --pink:#ff53d6; --green:#3bd98f; --gold:#f2c060;
+  --red:#ff657f; --orange:#ffb14f; --safe-bottom:max(16px, env(safe-area-inset-bottom)); --safe-top:max(10px, env(safe-area-inset-top));
+  --shadow:0 18px 50px rgba(0,0,0,.34); --radius:26px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{margin:0;height:100%;background:#05080f;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overflow:hidden}
+body.phase-gritty{background:radial-gradient(circle at 15% 0%, rgba(255,145,82,.13), transparent 24%), radial-gradient(circle at 85% 20%, rgba(71,215,255,.08), transparent 20%), linear-gradient(180deg,#15100d 0%,#0b1017 48%,#060a10 100%)}
+body.phase-neon{background:radial-gradient(circle at 14% 0%, rgba(71,215,255,.16), transparent 22%), radial-gradient(circle at 86% 14%, rgba(255,83,214,.12), transparent 20%), linear-gradient(180deg,#101521 0%,#0a1019 56%,#060b11 100%)}
+body.phase-luxury{background:radial-gradient(circle at 50% 0%, rgba(242,192,96,.12), transparent 24%), radial-gradient(circle at 84% 22%, rgba(71,215,255,.08), transparent 18%), linear-gradient(180deg,#12161e 0%,#090d14 56%,#05080f 100%)}
+#app{position:relative;max-width:460px;height:100%;margin:0 auto;overflow:hidden}
+.bg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 8%, rgba(255,255,255,.08), transparent 10%),radial-gradient(circle at 88% 18%, rgba(255,255,255,.07), transparent 10%),linear-gradient(180deg, rgba(255,255,255,.03), transparent 22%, rgba(255,255,255,.03) 58%, transparent 100%);opacity:.7}
+#shell{position:relative;height:100%;display:flex;flex-direction:column}
+#topHUD{padding:calc(10px + var(--safe-top)) 14px 10px;display:grid;grid-template-columns:1fr auto;gap:10px;z-index:3}
+.brand{font-size:1.02rem;font-weight:900;letter-spacing:.02em}
+.subline{font-size:.78rem;color:var(--muted);margin-top:4px}
+.moneyRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.moneyChip,.weatherChip{padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid var(--line);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.moneyChip .big{font-size:1rem;font-weight:900;line-height:1.05}
+.moneyChip .small,.weatherChip .small{font-size:.67rem;color:var(--muted);margin-top:2px}
+.weatherChip{display:flex;align-items:center;font-weight:900;text-transform:uppercase;letter-spacing:.08em;font-size:.82rem;padding-inline:16px;justify-content:center;min-width:120px}
+#objectiveStrip{margin:0 12px 10px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.04));border:1px solid var(--line);box-shadow:var(--shadow);border-radius:28px;padding:16px 16px 18px;position:relative;overflow:hidden;z-index:2}
+#objectiveStrip:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 86% 14%, rgba(255,255,255,.16), transparent 18%)}
+.badge{display:inline-flex;align-items:center;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.08);font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em}
+.badge.good{background:rgba(59,217,143,.14);color:#b8ffd7}
+.badge.warn{background:rgba(242,192,96,.16);color:#ffe2a2}
+.heroTitle{font-size:2rem;line-height:.95;font-weight:900;margin:12px 0 8px}
+.heroSub{font-size:1.03rem;color:#d2d9e6;max-width:72%;line-height:1.22}
+.statusGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.infoCard{background:linear-gradient(180deg,rgba(5,10,20,.78),rgba(8,13,22,.55));border:1px solid rgba(255,255,255,.06);border-radius:24px;padding:14px;min-height:112px}
+.infoCard .k{font-size:.78rem;color:var(--muted)}
+.infoCard .v{font-size:1.15rem;font-weight:900;margin-top:6px}
+.progress{height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:12px}
+.progress > span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--pink));transition:width .25s ease}
+#content{flex:1;overflow:auto;padding:0 12px calc(120px + var(--safe-bottom));scrollbar-width:none;z-index:2}
+#content::-webkit-scrollbar{display:none}
+.sectionHead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:10px 2px 10px}
+.sectionHead h2{margin:0;font-size:1.16rem;line-height:1}
+.sectionHead .hint{font-size:.72rem;color:var(--muted);font-weight:800;text-align:right;max-width:62%}
+.panel{background:linear-gradient(180deg,rgba(8,14,24,.88),rgba(8,13,22,.76));border:1px solid rgba(255,255,255,.07);box-shadow:var(--shadow);border-radius:28px;padding:14px;margin-bottom:14px;position:relative;overflow:hidden}
+.panel.chrome:before{content:"";position:absolute;inset:0;background:linear-gradient(135deg, rgba(255,255,255,.05), transparent 28%);pointer-events:none}
+.assetCard{padding:18px;border-radius:28px;background:linear-gradient(180deg,rgba(5,10,20,.94),rgba(8,13,22,.84));border:1px solid rgba(71,215,255,.08);box-shadow:0 18px 44px rgba(0,0,0,.34);margin-bottom:16px;position:relative;overflow:hidden}
+.assetCard.max20{border-color:rgba(242,192,96,.25)}
+.assetCard.max50{border-color:rgba(59,217,143,.25)}
+.assetCard:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 10% 0%, rgba(71,215,255,.08), transparent 20%), radial-gradient(circle at 92% 8%, rgba(255,83,214,.08), transparent 18%);pointer-events:none}
+.assetTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.assetTitle{font-size:1.55rem;line-height:1.02;font-weight:900;margin:0 0 6px}
+.muted{color:var(--muted)}
+.rule{height:1px;background:rgba(255,255,255,.08);margin:14px 0}
+.metricRow{display:flex;justify-content:space-between;gap:12px;font-size:.92rem;align-items:center}
+.levelBar{height:14px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin:12px 0 14px}
+.levelBar > span{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));width:0;transition:width .25s ease}
+.btnRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{border:0;border-radius:22px;padding:16px 16px;font-weight:900;font-size:1rem;color:#f6f8ff;background:#1d2636;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);cursor:pointer}
+button.primary{background:linear-gradient(180deg,#49d7ff,#1d8fff);color:white}
+button.gold{background:linear-gradient(180deg,#efcb77,#b37d18);color:#0d1220}
+button.hot{background:linear-gradient(180deg,#b33fe0,#ff536c)}
+button.good{background:linear-gradient(180deg,#29b56f,#1c7e50)}
+button.flat{background:rgba(255,255,255,.06)}
+button.ghost{background:rgba(255,255,255,.05);color:#cfd7e7}
+button:disabled{opacity:.44;filter:saturate(.72);cursor:not-allowed}
+.homeTap{height:94px;font-size:1.2rem;border-radius:28px;background:linear-gradient(180deg,#233042,#111925);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 14px 38px rgba(0,0,0,.26)}
+.homeTap strong{display:block;font-size:1.45rem;margin-top:4px}
+.quickGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quickCard{padding:14px;border-radius:24px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+.quickCard .qk{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:800}
+.quickCard .qv{font-size:1.04rem;font-weight:900;margin-top:8px;line-height:1.1}
+#nav{position:absolute;left:12px;right:12px;bottom:calc(10px + var(--safe-bottom));display:flex;gap:8px;z-index:4}
+#nav button{flex:1;padding:15px 6px;border-radius:20px;background:rgba(20,25,35,.88);border:1px solid rgba(255,255,255,.06);font-size:.83rem}
+#nav button.active{box-shadow:inset 0 0 0 2px rgba(71,215,255,.78);color:#fff}
+.selectorRow{display:flex;gap:8px;overflow:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.selectorRow::-webkit-scrollbar{display:none}
+.selector{white-space:nowrap;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);font-weight:900;font-size:.82rem}
+.selector.active{box-shadow:inset 0 0 0 2px rgba(71,215,255,.85)}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi .quickCard{min-height:88px}
+.tiny{font-size:.74rem;color:var(--muted)}
+.stamp{font-size:.88rem;letter-spacing:.12em;text-transform:uppercase;font-weight:900}
+.floatTap{position:absolute;pointer-events:none;transform:translate(-50%,-50%);font-weight:900;font-size:1.1rem;animation:floatUp .85s ease forwards;text-shadow:0 4px 18px rgba(0,0,0,.38);z-index:6}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,0) scale(.92)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-80px) scale(1.08)}}
+#overlay{position:absolute;inset:0;background:rgba(4,7,12,.78);backdrop-filter:blur(10px);display:none;z-index:10;padding:calc(18px + var(--safe-top)) 14px calc(14px + var(--safe-bottom));}
+#overlay.show{display:block}
+.ovPanel{height:100%;background:linear-gradient(180deg,rgba(10,16,25,.96),rgba(8,13,21,.95));border:1px solid rgba(255,255,255,.08);border-radius:30px;padding:16px;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.ovTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.ovTitle{font-size:1.36rem;font-weight:900}
+.ovSub{font-size:.9rem;color:var(--muted);margin-top:4px}
+#overlayContent{flex:1;overflow:auto;padding-top:12px;scrollbar-width:none}
+#overlayContent::-webkit-scrollbar{display:none}
+.center{text-align:center}
+.bigNum{font-size:2rem;font-weight:900}
+.cards2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.issueGrid,.choiceGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choiceBtn{padding:18px;font-size:1rem;border-radius:22px}
+.playingCard{width:56px;height:78px;border-radius:14px;background:#f7f8fd;color:#0d1320;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.25rem;border:2px solid rgba(0,0,0,.08)}
+.playingCard.red{color:#d6314e}
+.cardHand{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.flashRing{width:190px;height:190px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:radial-gradient(circle, rgba(71,215,255,.14), rgba(71,215,255,.04));box-shadow:inset 0 0 0 18px rgba(255,255,255,.05), 0 0 40px rgba(71,215,255,.18)}
+.flashRing.ready{box-shadow:inset 0 0 0 18px rgba(255,83,214,.32), 0 0 48px rgba(255,83,214,.32);transform:scale(1.04)}
+canvas{width:100%;max-width:100%;display:block;background:rgba(255,255,255,.03);border-radius:22px;border:1px solid rgba(255,255,255,.06)}
+#startScreen{position:absolute;inset:0;z-index:30;background:radial-gradient(circle at 50% 18%, rgba(242,192,96,.12), transparent 20%), radial-gradient(circle at 20% 8%, rgba(71,215,255,.12), transparent 20%), linear-gradient(180deg,#0d1017 0%,#06090f 100%);display:flex;align-items:center;justify-content:center;padding:24px}
+.startCard{width:100%;height:100%;border-radius:34px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(12,17,26,.82),rgba(7,10,16,.94));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.startCard:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 16%, rgba(255,255,255,.12), transparent 16%), linear-gradient(180deg, transparent 0%, rgba(255,255,255,.04) 46%, transparent 100%)}
+.startSky{position:absolute;left:0;right:0;bottom:0;height:42%;opacity:.2;background:linear-gradient(180deg,transparent 0%,rgba(255,255,255,.04) 100%)}
+.startSky svg{width:100%;height:100%}
+.startCenter{text-align:center;z-index:1}
+.startTitle{font-size:2.5rem;font-weight:900;letter-spacing:.01em}
+.tapAnywhere{margin-top:18px;font-size:.98rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#dfe7f6;opacity:.9;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.38}50%{opacity:1}}
+#toast{position:absolute;left:50%;top:calc(90px + var(--safe-top));transform:translateX(-50%) translateY(-8px);background:rgba(10,14,22,.94);border:1px solid rgba(255,255,255,.08);padding:12px 16px;border-radius:16px;opacity:0;pointer-events:none;transition:.22s;z-index:20;max-width:86%;text-align:center;font-weight:800}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.confetti{position:absolute;inset:0;pointer-events:none;z-index:15;overflow:hidden}.confetti span{position:absolute;top:-10px;width:10px;height:16px;opacity:.95;animation:fall 1.6s linear forwards}.confetti span:nth-child(odd){width:8px;height:12px}@keyframes fall{to{transform:translateY(110vh) rotate(560deg);opacity:0}}
+.hidden{display:none !important}
+</style>
+</head>
+<body class="phase-gritty">
+<div id="app">
+  <div class="bg"></div>
+  <div id="startScreen">
+    <div class="startCard" id="startTap">
+      <div class="startSky">
+        <svg viewBox="0 0 460 240" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 240 L0 150 L35 150 L35 85 L58 85 L58 130 L75 130 L75 65 L102 65 L102 145 L130 145 L130 102 L156 102 L156 150 L185 150 L185 52 L208 52 L208 140 L230 140 L230 20 L255 20 L255 148 L285 148 L285 90 L310 90 L310 150 L336 150 L336 70 L364 70 L364 150 L388 150 L388 105 L417 105 L417 150 L460 150 L460 240 Z" fill="rgba(255,255,255,.6)"/>
+        </svg>
+      </div>
+      <div class="startCenter">
+        <div class="startTitle">D$: Hustle Town</div>
+        <div class="tapAnywhere">Tap Anywhere to Proceed</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="shell">
+    <div id="topHUD">
+      <div>
+        <div class="brand">D$: Hustle Town</div>
+        <div class="subline" id="runLabel">Base Run â¢ District 1</div>
+        <div class="moneyRow">
+          <div class="moneyChip"><div class="big mono" id="moneyChip">$25</div><div class="small">Cash on hand</div></div>
+          <div class="moneyChip"><div class="big mono" id="incomeChip">$0/s</div><div class="small">Passive income</div></div>
+          <div class="moneyChip"><div class="big mono" id="tapChip">Tap +$20</div><div class="small">Tap cash</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="weatherChip" id="weatherChip">Houston</div>
+        <div class="subline" style="text-align:right;margin-top:10px">Auto save on</div>
+      </div>
+    </div>
+
+    <div id="objectiveStrip">
+      <div class="badge" id="phaseTag">Street Tested</div>
+      <div class="heroTitle" id="districtName">Southside Start</div>
+      <div class="heroSub" id="districtBlurb">Neighborhood grind. Small stacks. Big energy.</div>
+      <div class="statusGrid">
+        <div class="infoCard">
+          <div class="k">District Power</div>
+          <div class="v" id="xpText">0 / 2 ready</div>
+          <div class="progress"><span id="xpBar"></span></div>
+        </div>
+        <div class="infoCard">
+          <div class="k">Current Objective</div>
+          <div class="v" id="challengeState">Get both hustles to 20</div>
+          <div class="progress"><span id="challengeBar"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="content"></div>
+
+    <div id="nav"></div>
+  </div>
+
+  <div id="overlay">
+    <div class="ovPanel">
+      <div class="ovTop">
+        <div>
+          <div class="ovTitle" id="overlayTitle">Challenge</div>
+          <div class="ovSub" id="overlaySub">Beat the gate.</div>
+        </div>
+        <button class="ghost" id="overlayClose">Close</button>
+      </div>
+      <div id="overlayContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const MULT=[1,1.18,1.38,1.61,1.88,2.2,2.57,3.0,3.5,4.08,4.75,5.54,6.46,7.54,8.8,10.28,12.0,14.0,16.35,19.08,22.28,26.0,30.35,35.4,41.3,48.2,56.2,65.6,76.5,89.2,104.0,121.2,141.2,164.5,191.7,223.4,260.4,303.5,353.7,412.2,480.4,559.8,652.2,760.0,885.6,1032.0,1202.0,1400.0,1630.0,1900.0];
+const LEVELS=[
+{id:1,name:'Southside Start',phase:'gritty',phaseLabel:'Street Tested',blurb:'Neighborhood grind. Small stacks. Big energy.',clear:"Okay, you poppinâ now. The block see you.",mini:'foodtruck',reward:250,businesses:[{id:'lemon',name:'Lemonade Stand',unlock:12,base:1.5,growth:1.22},{id:'truck',name:'Food Truck',unlock:90,base:8,growth:1.235}]},
+{id:2,name:'Bayou Grind',phase:'gritty',phaseLabel:'Bayou City',blurb:'Heat, hustle, and local expansion.',clear:'Bayou City made room for your hustle.',mini:'cleanup',reward:1200,businesses:[{id:'wash',name:'Car Wash',unlock:340,base:18,growth:1.224},{id:'bait',name:'Bayou Bait Shop',unlock:760,base:42,growth:1.238}]},
+{id:3,name:'Block to Block',phase:'gritty',phaseLabel:'Move Smart',blurb:'Move smart, stack fast, stay out the jam.',clear:'You slid through that clean. No lane switch wasted.',mini:'traffic',reward:5600,businesses:[{id:'courier',name:'Courier Van Service',unlock:2200,base:120,growth:1.228},{id:'corner',name:'Corner Store',unlock:4600,base:270,growth:1.242}]},
+{id:4,name:'Midtown Tables',phase:'neon',phaseLabel:'Player Mode',blurb:'Late-night money. Better timing. Higher stakes.',clear:'You kept it player and left the table up.',mini:'blackjack',reward:22000,businesses:[{id:'cards',name:'Private Card Lounge',unlock:12000,base:680,growth:1.232},{id:'valet',name:'Valet Service',unlock:23000,base:1320,growth:1.246}]},
+{id:5,name:'Midtown Motion',phase:'neon',phaseLabel:'Motion Up',blurb:'Lights loud. Traffic loud. Your money louder.',clear:'Now you got motion for real. Lights hittinâ, money flowinâ.',mini:'streetbet',reward:90000,businesses:[{id:'promo',name:'Club Promo Agency',unlock:60000,base:3350,growth:1.236},{id:'hookah',name:'Hookah Lounge',unlock:115000,base:6400,growth:1.248}]},
+{id:6,name:'Energy Corridor',phase:'neon',phaseLabel:'Heavy Money',blurb:'Pressure, timing, and grown-man cash.',clear:'Thatâs grown Houston money right there. Pressure never broke you.',mini:'neonpulse',reward:360000,businesses:[{id:'pump',name:'Pump Service Company',unlock:260000,base:14500,growth:1.238},{id:'diesel',name:'Diesel Supply Contract',unlock:520000,base:28500,growth:1.25}]},
+{id:7,name:'Port Authority Run',phase:'neon',phaseLabel:'Ship Channel',blurb:'Heavy loads. Tight windows. Clean execution.',clear:'You got the port jumpinâ. Heavy load, light work.',mini:'portload',reward:1500000,businesses:[{id:'cargo',name:'Cargo Loading Crew',unlock:1200000,base:62000,growth:1.24},{id:'broker',name:'Shipping Brokerage',unlock:2400000,base:118000,growth:1.252}]},
+{id:8,name:'Storm Season',phase:'luxury',phaseLabel:'Pressure Tested',blurb:'Chaotic conditions. Controlled response.',clear:'Storm came through talking crazy. You talked crazier.',mini:'storm',reward:6500000,businesses:[{id:'supply',name:'Emergency Supply Depot',unlock:5500000,base:250000,growth:1.242},{id:'repair',name:'Property Repair Team',unlock:11000000,base:480000,growth:1.254}]},
+{id:9,name:'Space City Rising',phase:'luxury',phaseLabel:'Lift Off',blurb:'Houston ambition with a cleaner suit on it.',clear:'Space City status. You ainât just up there â you belong there.',mini:'rocket',reward:30000000,businesses:[{id:'startup',name:'Tech Startup Hub',unlock:24000000,base:1050000,growth:1.244},{id:'aero',name:'Aerospace Supplier',unlock:50000000,base:2100000,growth:1.256}]},
+{id:10,name:'Skyline Capital',phase:'luxury',phaseLabel:'Top Floor',blurb:'Glass towers. Fast deals. Executive pressure.',clear:'Top floor energy. Whole skyline look different from your side.',mini:'skylinehop',reward:145000000,businesses:[{id:'rentals',name:'Luxury High-Rise Rentals',unlock:120000000,base:4600000,growth:1.246},{id:'fund',name:'Investment Firm',unlock:240000000,base:9200000,growth:1.258}]},
+{id:11,name:'Hustle Town Crown',phase:'luxury',phaseLabel:'Crown Holder',blurb:'You ran it all the way up. Now prove it holds.',clear:'',mini:'empirenight',reward:0,businesses:[{id:'mega',name:'Port Megacontract Holdings',unlock:550000000,base:19000000,growth:1.248},{id:'hq',name:'Downtown Conglomerate HQ',unlock:1100000000,base:38000000,growth:1.26}]}
+];
+
+const MINI_CFG={
+foodtruck:[{goal:13,time:28,mistakes:4},{goal:14,time:26,mistakes:3},{goal:15,time:24,mistakes:3},{goal:16,time:22,mistakes:2},{goal:17,time:20,mistakes:2},{goal:18,time:18,mistakes:1}],
+cleanup:[{goal:16,time:33,hits:3},{goal:18,time:31,hits:3},{goal:20,time:29,hits:2},{goal:22,time:27,hits:2},{goal:24,time:25,hits:1},{goal:26,time:23,hits:1}],
+traffic:[{time:30,crashes:2,speed:1.08},{time:32,crashes:2,speed:1.14},{time:34,crashes:1,speed:1.2},{time:36,crashes:1,speed:1.26},{time:38,crashes:1,speed:1.33},{time:40,crashes:0,speed:1.4}],
+blackjack:[{wins:3,losses:2},{wins:4,losses:2},{wins:4,losses:1},{wins:5,losses:2},{wins:5,losses:1},{wins:6,losses:1}],
+streetbet:[{goal:195,rounds:3,time:11.5},{goal:215,rounds:3,time:11},{goal:235,rounds:3,time:10.5},{goal:260,rounds:3,time:10},{goal:290,rounds:3,time:9.5},{goal:320,rounds:3,time:9}],
+neonpulse:[{hits:26,acc:72,perfect:110,good:220},{hits:28,acc:74,perfect:100,good:210},{hits:30,acc:76,perfect:90,good:190},{hits:32,acc:78,perfect:80,good:175},{hits:34,acc:80,perfect:70,good:160},{hits:36,acc:82,perfect:60,good:145}],
+portload:[{goal:11,time:38,mistakes:3},{goal:12,time:36,mistakes:3},{goal:13,time:34,mistakes:2},{goal:14,time:32,mistakes:2},{goal:15,time:30,mistakes:1},{goal:16,time:28,mistakes:1}],
+storm:[{time:42,spawn:2100,drain:1.25,maxIssues:4},{time:44,spawn:2000,drain:1.34,maxIssues:4},{time:46,spawn:1800,drain:1.44,maxIssues:5},{time:48,spawn:1700,drain:1.54,maxIssues:5},{time:50,spawn:1500,drain:1.65,maxIssues:6},{time:54,spawn:1350,drain:1.76,maxIssues:6}],
+rocket:[{seq:[4,5,6]},{seq:[5,6,6]},{seq:[5,6,7]},{seq:[6,7,7]},{seq:[6,7,8]},{seq:[7,8,8]}],
+skylinehop:[{gates:15,speed:1.08,gap:120},{gates:16,speed:1.14,gap:116},{gates:18,speed:1.2,gap:110},{gates:20,speed:1.26,gap:104},{gates:22,speed:1.33,gap:96},{gates:24,speed:1.4,gap:90}],
+empirenight:[{traffic:13,rhythm:11,bet:75,hop:7,taps:48,tapTime:10},{traffic:14,rhythm:12,bet:85,hop:8,taps:52,tapTime:10},{traffic:15,rhythm:13,bet:95,hop:9,taps:56,tapTime:9.5},{traffic:16,rhythm:14,bet:110,hop:10,taps:60,tapTime:9},{traffic:18,rhythm:16,bet:125,hop:12,taps:66,tapTime:8.5},{traffic:20,rhythm:18,bet:140,hop:14,taps:72,tapTime:8}]};
+
+const navBase=[['home','Home'],['hustles','Hustles'],['challenge','Challenge'],['district','District']];
+let activeTab='home'; let selectedDistrict=1; let overlayOpen=false; let gameLoop=null; let miniDisposer=null; let overlayClosable=true;
+function defaultState(){return {started:false, money:25, ng:0, totalClears:0, currentDistrict:1, districtClears:{}, districtMastery:{}, businesses:{}, lastWeather:'Houston', lastVisited:1};}
+function load(){try{return Object.assign(defaultState(), JSON.parse(localStorage.getItem('d_hustle_town_save_v3')||'{}'))}catch(e){return defaultState()}}
+let state=load();
+selectedDistrict=Math.min(state.currentDistrict, state.lastVisited||state.currentDistrict);
+function save(){state.lastVisited=selectedDistrict; localStorage.setItem('d_hustle_town_save_v3', JSON.stringify(state))}
+function fmt(n){n=Number(n)||0; const sign=n<0?'-':''; n=Math.abs(n); if(n>=1e12)return sign+'$'+(n/1e12).toFixed(n>=1e13?1:2).replace(/\.0$/,'')+'T'; if(n>=1e9)return sign+'$'+(n/1e9).toFixed(n>=1e10?1:2).replace(/\.0$/,'')+'B'; if(n>=1e6)return sign+'$'+(n/1e6).toFixed(n>=1e7?1:2).replace(/\.0$/,'')+'M'; if(n>=1e3)return sign+'$'+(n/1e3).toFixed(n>=1e4?1:2).replace(/\.0$/,'')+'K'; return sign+'$'+Math.round(n)}
+function districtById(id){return LEVELS[id-1]}
+function currentDistrict(){return districtById(state.currentDistrict)}
+function phaseClass(id){return id<=3?'phase-gritty':id<=7?'phase-neon':'phase-luxury'}
+function bizState(b){if(!state.businesses[b.id]) state.businesses[b.id]={level:0}; return state.businesses[b.id]}
+function incomeMultiplier(level){return MULT[Math.max(0, Math.min(49,level-1))]}
+function ngPassiveBoost(){return [0,.08,.16,.24,.34,.45][state.ng]||0}
+function bizIncome(b){const lv=bizState(b).level; if(!lv) return 0; return b.base*incomeMultiplier(lv)*(1+ngPassiveBoost())}
+function nextCost(b){const lv=bizState(b).level; if(lv>=50) return null; if(lv===0) return b.unlock; return Math.round(b.unlock*Math.pow(b.growth,lv))}
+function districtIncome(id){const d=districtById(id); return d.businesses.reduce((a,b)=>a+bizIncome(b),0)}
+function totalIncome(){let sum=0; for(let i=1;i<=state.currentDistrict;i++) sum+=districtIncome(i); return sum}
+function tapValue(){const ti=totalIncome(); const val=Math.max(75, ti*0.65 + state.currentDistrict*18 + (state.ng*40)); return Math.round(val)}
+function challengeReadyCount(id=state.currentDistrict){const d=districtById(id); return d.businesses.filter(b=>bizState(b).level>=20).length}
+function challengeUnlocked(id=state.currentDistrict){return challengeReadyCount(id)>=2}
+function challengeCleared(id=state.currentDistrict){return !!state.districtClears[id]}
+function districtMastery(id){const d=districtById(id); return Math.round(d.businesses.reduce((a,b)=>a+bizState(b).level,0)/2)}
+function districtUnlocked(id){return id<=state.currentDistrict}
+function allDone(){return state.currentDistrict===11 && challengeCleared(11)}
+function buildNav(){const nav=$('nav'); nav.innerHTML=''; const items=[...navBase]; if(state.totalClears>0) items.push(['ngplus','NG+']); items.forEach(([tab,label])=>{const b=document.createElement('button'); b.textContent=label; b.dataset.tab=tab; if(tab===activeTab) b.classList.add('active'); b.onclick=()=>{activeTab=tab; render()}; nav.appendChild(b)})}
+function toast(msg){const t=$('toast'); t.textContent=msg; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show')}
+function confetti(){const wrap=document.createElement('div'); wrap.className='confetti'; for(let i=0;i<26;i++){const s=document.createElement('span'); s.style.left=(Math.random()*100)+'%'; s.style.background=['#47d7ff','#ff53d6','#3bd98f','#f2c060'][Math.floor(Math.random()*4)]; s.style.animationDelay=(Math.random()*.25)+'s'; wrap.appendChild(s)} $('app').appendChild(wrap); setTimeout(()=>wrap.remove(),1700)}
+function showStartIfNeeded(){ $('startScreen').style.display=state.started?'none':'flex'; }
+function recalcBody(){document.body.className=phaseClass(state.currentDistrict)}
+function renderHeader(){recalcBody(); const d=currentDistrict(); const income=totalIncome(); $('runLabel').textContent=`${state.ng?`NG+${state.ng}`:'Base Run'} â¢ District ${state.currentDistrict}`; $('moneyChip').textContent=fmt(state.money); $('incomeChip').textContent=fmt(income)+'/s'; $('tapChip').textContent='Tap +'+fmt(tapValue()).replace('$',''); $('weatherChip').textContent=state.lastWeather; $('phaseTag').textContent=d.phaseLabel; $('districtName').textContent=d.name; $('districtBlurb').textContent=d.blurb; const ready=challengeReadyCount(); $('xpText').textContent=`${ready} / 2 ready`; $('xpBar').style.width=(ready/2*100)+'%'; if(challengeCleared()){$('challengeState').textContent= state.currentDistrict===11 ? 'Run complete' : 'Challenge cleared'; $('challengeBar').style.width='100%'} else if(challengeUnlocked()){$('challengeState').textContent='Challenge unlocked'; $('challengeBar').style.width='78%'} else {$('challengeState').textContent='Get both hustles to 20'; $('challengeBar').style.width=(ready/2*58)+'%'} }
+function actionButton(label, cls='primary', id=''){return `<button class="${cls}" ${id?`id="${id}"`:''}>${label}</button>`}
+function renderHome(){const d=currentDistrict(); const c=$('content'); const unlocked=challengeUnlocked(); const cleared=challengeCleared(); c.innerHTML='';
+ c.innerHTML=`
+<div class="sectionHead"><h2>Command Center</h2><div class="hint">${cleared?(state.currentDistrict===11?'Run complete â choose whatâs next':'Challenge beat. Move to the next district.'):unlocked?'Gate ready â go clear your challenge':'Build both current hustles to level 20'}</div></div>
+<div class="panel chrome">
+  <div class="quickGrid">
+    <div class="quickCard"><div class="qk">Current district</div><div class="qv">${d.name}</div></div>
+    <div class="quickCard"><div class="qk">District mastery</div><div class="qv">${districtMastery(state.currentDistrict)} / 50</div></div>
+  </div>
+  <div class="kpi" style="margin-top:10px">
+    <div class="quickCard"><div class="qk">Challenge gate</div><div class="qv">${challengeReadyCount()} / 2</div></div>
+    <div class="quickCard"><div class="qk">Best next move</div><div class="qv">${cleared?'Keep climbing or move on':unlocked?'Launch challenge':'Upgrade hustles'}</div></div>
+    <div class="quickCard"><div class="qk">Clear line</div><div class="qv" style="font-size:.9rem">${d.clear || 'Crown level'}</div></div>
+  </div>
+</div>
+<div class="panel chrome center">
+  <div class="tiny">Tap cash zone</div>
+  <button class="homeTap" id="tapZone">Tap Cash<strong>${fmt(tapValue())}</strong></button>
+</div>
+<div class="quickGrid">
+  <div class="panel chrome"><div class="qk">Current hustle income</div><div class="qv">${fmt(districtIncome(state.currentDistrict))}/s</div><div class="tiny" style="margin-top:10px">Both current hustles must reach 20 to open the gate.</div></div>
+  <div class="panel chrome"><div class="qk">Quick jump</div><div class="qv">${cleared?(state.currentDistrict===11?'Run complete':'Next district unlocked'):unlocked?'Challenge ready':'Hustles page'}</div><div style="margin-top:12px">${cleared?actionButton(state.currentDistrict===11?'Open End Choice':'Move to Next District','gold','homeCTA'):actionButton(unlocked?'Launch Challenge':'Go to Hustles', unlocked?'hot':'primary','homeCTA')}</div></div>
+</div>`;
+ $('tapZone').onclick=e=>doTapCash(e);
+ $('homeCTA').onclick=()=>{ if(cleared){ if(state.currentDistrict===11) showCompletionPopup(); else advanceDistrict(); } else if(unlocked){ activeTab='challenge'; render(); } else { activeTab='hustles'; render(); } };
+}
+function renderHustles(){const c=$('content'); c.innerHTML=''; const options=[]; for(let i=1;i<=state.currentDistrict;i++) options.push(i); c.innerHTML=`<div class="sectionHead"><h2>Hustles</h2><div class="hint">Current district unlocks the next challenge at level 20. Keep old districts climbing to 50.</div></div><div class="selectorRow" id="districtSelectors"></div><div id="hustleList"></div>`;
+ const sel=$('districtSelectors'); options.forEach(id=>{const b=document.createElement('button'); b.className='selector'+(id===selectedDistrict?' active':''); b.textContent=`${id}. ${districtById(id).name}`; b.onclick=()=>{selectedDistrict=id; save(); renderHustles()}; sel.appendChild(b)});
+ const list=$('hustleList'); const d=districtById(selectedDistrict); d.businesses.forEach(b=>{const s=bizState(b), cost=nextCost(b), currentInc=bizIncome(b), at20=s.level>=20, at50=s.level>=50; const card=document.createElement('div'); card.className='assetCard'+(at50?' max50':at20?' max20':''); card.innerHTML=`<div class="assetTop"><div><div class="assetTitle">${b.name}</div><div class="muted mono">${s.level?`${fmt(currentInc)}/s`:'Locked'} â¢ Level ${s.level}/50</div></div><div class="badge ${at50?'good':at20?'warn':''}">${at50?'MAXED 50':at20?'GATE READY':'HOUSTON'}</div></div><div class="rule"></div><div class="metricRow"><span class="muted">Next cost</span><strong class="mono">${cost==null?'â':fmt(cost)}</strong></div><div class="levelBar"><span style="width:${s.level*2}%"></span></div><div class="btnRow"><button class="${at50?'good':'primary'}" data-buy="${b.id}" ${cost==null||state.money<cost?'disabled':''}>${s.level===0?'Open Hustle':at50?'Maxed 50':'Upgrade +1'}</button><button class="flat" disabled>${at50?'Mastered':at20?'20 reached':'Need 20 for gate'}</button></div>`; list.appendChild(card)})
+}
+function renderChallenge(){const c=$('content'); const d=currentDistrict(); const unlocked=challengeUnlocked(); const cleared=challengeCleared(); const canAdvance=cleared && state.currentDistrict<11; c.innerHTML=`<div class="sectionHead"><h2>Challenge Event</h2><div class="hint">This is the district gate. Mini-games start tougher now.</div></div><div class="panel chrome"><div class="badge">District ${d.id} challenge</div><div class="heroTitle" style="font-size:1.8rem;margin-top:12px">${miniName(d.mini)}</div><div class="heroSub" style="max-width:100%;font-size:1rem">${miniDesc(d.mini)}</div><div class="rule"></div><div class="quickGrid"><div class="quickCard"><div class="qk">Unlock condition</div><div class="qv">Both hustles at 20</div></div><div class="quickCard"><div class="qk">Status</div><div class="qv">${cleared?'Cleared':unlocked?'Ready':'Locked'}</div></div></div><div style="margin-top:14px" class="btnRow">${unlocked&&!cleared?'<button class="hot" id="startChallenge">Start Challenge</button>':'<button class="ghost" disabled>'+(cleared?'Challenge Cleared':'Locked')+'</button>'}${canAdvance?'<button class="gold" id="advanceDistrict">Unlock Next District</button>':state.currentDistrict===11&&cleared?'<button class="gold" id="endRunBtn">Open Completion Choice</button>':'<button class="flat" disabled>'+ (unlocked?'Beat it to unlock next district':'Get both hustles to 20') +'</button>'}</div></div>`;
+ if($('startChallenge')) $('startChallenge').onclick=()=>openMiniGame(d.mini);
+ if($('advanceDistrict')) $('advanceDistrict').onclick=advanceDistrict;
+ if($('endRunBtn')) $('endRunBtn').onclick=showCompletionPopup;
+}
+function renderDistrict(){const c=$('content'); c.innerHTML=`<div class="sectionHead"><h2>District Takeover</h2><div class="hint">Cleared districts stay yours. Mastery can keep climbing to 50.</div></div>`; LEVELS.forEach(d=>{const unlocked=d.id<=state.currentDistrict; const cleared=challengeCleared(d.id); const mastery=districtMastery(d.id); const card=document.createElement('div'); card.className='panel chrome'; card.innerHTML=`<div class="assetTop"><div><div class="assetTitle" style="font-size:1.2rem">${d.id}. ${d.name}</div><div class="muted">${d.blurb}</div></div><div class="badge ${cleared?'good':unlocked?'warn':''}">${cleared?'STAMPED':unlocked?'OPEN':'LOCKED'}</div></div><div class="rule"></div><div class="quickGrid"><div class="quickCard"><div class="qk">Mastery</div><div class="qv">${unlocked? mastery+'/50':'â'}</div></div><div class="quickCard"><div class="qk">Gate</div><div class="qv">${cleared?'Cleared':unlocked?challengeReadyCount(d.id)+'/2 ready':'Locked'}</div></div></div><div class="tiny" style="margin-top:12px">${d.clear || 'Final crown district.'}</div>`; c.appendChild(card)}) }
+function renderNGPlus(){const c=$('content'); const next=Math.min(5,state.ng+1); const unlocked=allDone() && state.totalClears>state.ng; c.innerHTML=`<div class="sectionHead"><h2>New Game Plus</h2><div class="hint">Money side gets faster. Mini-game side gets meaner.</div></div><div class="panel chrome"><div class="badge">${state.ng?`Current NG+${state.ng}`:'Base Run'}</div><div class="heroTitle" style="font-size:1.9rem;margin-top:12px">Run it back harder</div><div class="heroSub" style="max-width:100%">NG+ stays hidden until you beat the full run. You only unlock the next one after clearing District 11 on your current run.</div><div class="quickGrid" style="margin-top:14px"><div class="quickCard"><div class="qk">Starting cash</div><div class="qv mono">${fmt(25*(1+[0,.12,.25,.40,.60,.85][next]))}</div></div><div class="quickCard"><div class="qk">Passive boost</div><div class="qv mono">${Math.round(([0,.08,.16,.24,.34,.45][next])*100)}%</div></div></div><div class="btnRow" style="margin-top:16px"><button class="hot" id="startNG" ${!unlocked||state.ng>=5?'disabled':''}>${state.ng>=5?'Final NG reached':unlocked?`Start NG+${next}`:'Beat District 11 first'}</button><button class="gold" id="freshRun">Start Fresh Run</button></div></div>`; $('startNG').onclick=()=>{ if(unlocked && state.ng<5) resetRun(next) }; $('freshRun').onclick=()=>{ if(confirm('Start a fresh run and wipe current progress?')) resetRun(0,true); } }
+function render(){renderHeader(); buildNav(); if(activeTab==='home') renderHome(); else if(activeTab==='hustles') renderHustles(); else if(activeTab==='challenge') renderChallenge(); else if(activeTab==='district') renderDistrict(); else renderNGPlus(); save();}
+function doTapCash(evt){const add=tapValue(); state.money+=add; save(); renderHeader(); if(activeTab==='home') renderHome(); const f=document.createElement('div'); f.className='floatTap'; f.textContent='+'+fmt(add); const rect=$('app').getBoundingClientRect(); const x=(evt && evt.clientX ? evt.clientX : rect.left+rect.width/2)-rect.left; const y=(evt && evt.clientY ? evt.clientY : rect.top+rect.height*.7)-rect.top; f.style.left=x+'px'; f.style.top=y+'px'; $('app').appendChild(f); setTimeout(()=>f.remove(),850)}
+function buyBiz(id){const d=LEVELS.flatMap(x=>x.businesses).find(b=>b.id===id); const cost=nextCost(d); if(cost==null||state.money<cost) return; state.money-=cost; const s=bizState(d); s.level=Math.min(50,s.level+1); if(s.level===20){toast(d.name+' hit level 20 â¢ gate progress up'); confetti()} else if(s.level===50){toast(d.name+' MAXED 50'); confetti()} save(); render()}
+$('content').addEventListener('click',e=>{const b=e.target.closest('[data-buy]'); if(b) buyBiz(b.dataset.buy)});
+function advanceDistrict(){if(!challengeCleared(state.currentDistrict)) return; if(state.currentDistrict===11){showCompletionPopup(); return} state.money += currentDistrict().reward; state.currentDistrict=Math.min(11,state.currentDistrict+1); selectedDistrict=state.currentDistrict; confetti(); toast(currentDistrict().clear ? districtById(state.currentDistrict-1).clear : 'District unlocked'); save(); activeTab='home'; render()}
+function markChallengeWin(){state.districtClears[state.currentDistrict]=true; save(); confetti(); closeOverlay(); toast(miniName(currentDistrict().mini)+' cleared'); render()}
+function resetRun(nextNg=0,fresh=false){const started=state.started; const clears=fresh?0:state.totalClears; state=defaultState(); state.started=started; state.ng=nextNg; state.totalClears=clears; state.money=Math.round(25*(1+[0,.12,.25,.40,.60,.85][nextNg])); selectedDistrict=1; activeTab='home'; save(); render(); toast(nextNg?`NG+${nextNg} live`:'Fresh run started')}
+function openOverlay(title,sub,closable=true){overlayOpen=true; overlayClosable=closable; $('overlayTitle').textContent=title; $('overlaySub').textContent=sub; $('overlay').classList.add('show'); $('overlayClose').classList.toggle('hidden', !closable)}
+function closeOverlay(){overlayOpen=false; $('overlay').classList.remove('show'); $('overlayContent').innerHTML=''; if(miniDisposer){ try{miniDisposer()}catch(e){} } miniDisposer=null; overlayClosable=true; $('overlayClose').classList.remove('hidden') }
+$('overlayClose').onclick=()=>{ if(overlayClosable) closeOverlay() };
+$('startTap').onclick=()=>{ state.started=true; save(); showStartIfNeeded() };
+function retryCard(msg,retryFn){ $('overlayContent').innerHTML=`<div class="panel chrome center"><div class="bigNum">Run it back</div><div class="heroSub" style="max-width:100%;margin:12px auto 0">${msg}</div><div class="btnRow" style="margin-top:16px"><button class="hot" id="retryMini">Retry</button><button class="ghost" id="exitMini">Back Out</button></div></div>`; $('retryMini').onclick=retryFn; $('exitMini').onclick=()=>closeOverlay(); }
+function statCards(items){return `<div class="cards2">${items.map(x=>`<div class="quickCard center"><div class="qk">${x.label}</div><div class="qv mono">${x.value}</div><div class="tiny" style="margin-top:6px">${x.sub||''}</div></div>`).join('')}</div>`}
+function miniName(k){return {foodtruck:'Food Truck Rush',cleanup:'Bayou Cleanup',traffic:'Traffic Weave',blackjack:'High Roller Hustle',streetbet:'Street Bet',neonpulse:'Neon Pulse',portload:'Port Loadout',storm:'Storm Surge',rocket:'Rocket Assembly',skylinehop:'Skyline Hop',empirenight:'Empire Night'}[k]||'Challenge'}
+function miniDesc(k){return {foodtruck:'Serve the right orders before the clock runs out.',cleanup:'Clean the bayou quick and dodge the hazards.',traffic:'One-touch lane switching. Stay clean in traffic.',blackjack:'Beat the dealer in a quick hustle-friendly blackjack set.',streetbet:'Build the multiplier, then cash before the bust.',neonpulse:'Tap on the beat. Cleaner timing, cleaner money.',portload:'Place the right cargo in the right order under pressure.',storm:'Hold the city together while chaos stacks up.',rocket:'Remember the sequence and build the launch clean.',skylinehop:'One-touch physics. Clear the skyline gates.',empirenight:'Final remix. Five fast phases, one clean clear.'}[k]||'Beat the gate.'}
+function cfgFor(key){ return MINI_CFG[key][Math.min(5,state.ng)] }
+function openMiniGame(key){ openOverlay(miniName(key), miniDesc(key), false); if(miniDisposer){ try{miniDisposer()}catch(e){} miniDisposer=null; } ({foodtruck:miniFoodTruck,cleanup:miniCleanup,traffic:miniTraffic,blackjack:miniBlackjack,streetbet:miniStreetBet,neonpulse:miniNeonPulse,portload:miniPortLoad,storm:miniStorm,rocket:miniRocket,skylinehop:miniSkylineHop,empirenight:miniEmpireNight}[key])(); }
+
+function miniFoodTruck(){const cfg=cfgFor('foodtruck'); let score=0,mistakes=0,left=cfg.time,active=true,timer; const foods=['Taco Stack','Loaded Dog','Bayou Burger','Drip Soda']; const right=()=>foods[Math.floor(Math.random()*foods.length)]; let answer=right(); $('overlayContent').innerHTML=`${statCards([{label:'Correct',value:`<span id="ftScore">0</span> / ${cfg.goal}`,sub:'Need clean orders'},{label:'Misses',value:`<span id="ftMiss">0</span> / ${cfg.mistakes}`,sub:'Max mistakes'},{label:'Time',value:`<span id="ftTime">${left}</span>s`,sub:'Clock running'}])}<div class="panel chrome center" style="margin-top:12px"><div class="tiny">Current order</div><div class="bigNum" id="ftOrder" style="font-size:1.8rem;margin-top:8px">${answer}</div><div class="choiceGrid" style="margin-top:14px" id="ftChoices"></div></div>`; function refresh(){ const opts=[answer,...foods.filter(x=>x!==answer).sort(()=>Math.random()-.5).slice(0,3)].sort(()=>Math.random()-.5); const box=$('ftChoices'); box.innerHTML=''; opts.forEach(o=>{const b=document.createElement('button'); b.className='choiceBtn '+(o===answer?'primary':'ghost'); b.textContent=o; b.onclick=()=>{ if(!active) return; if(o===answer){score++; $('ftScore').textContent=score; if(score>=cfg.goal){active=false; clearInterval(timer); markChallengeWin(); return} answer=right(); $('ftOrder').textContent=answer; refresh();} else {mistakes++; $('ftMiss').textContent=mistakes; if(mistakes>cfg.mistakes){active=false; clearInterval(timer); retryCard('Orders got away from you. Need cleaner reads.', ()=>miniFoodTruck())}}}; box.appendChild(b)}) }
+ refresh(); timer=setInterval(()=>{ if(!active) return; left--; $('ftTime').textContent=left; if(left<=0){active=false; clearInterval(timer); score>=cfg.goal?markChallengeWin():retryCard('Clock hit zero before the line cleared.', ()=>miniFoodTruck())}},1000); miniDisposer=()=>{active=false; clearInterval(timer)} }
+
+function miniCleanup(){const cfg=cfgFor('cleanup'); let score=0,hits=0,left=cfg.time,active=true,timer,spawner; const items=[]; $('overlayContent').innerHTML=`${statCards([{label:'Cleared',value:`<span id="clScore">0</span> / ${cfg.goal}`,sub:'Debris removed'},{label:'Hazards',value:`<span id="clHits">0</span> / ${cfg.hits}`,sub:'Avoid hazards'},{label:'Time',value:`<span id="clTime">${left}</span>s`,sub:'Bayou moving'}])}<div class="panel chrome" style="margin-top:12px"><div id="cleanupField" style="position:relative;height:370px;border-radius:22px;background:linear-gradient(180deg,rgba(41,89,127,.52),rgba(13,31,59,.72));overflow:hidden;border:1px solid rgba(255,255,255,.08)"></div></div>`;
+ const field=$('cleanupField'); function spawn(){ if(!active) return; const d=document.createElement('button'); const hazard=Math.random()<.22; d.className='ghost'; d.style.position='absolute'; d.style.left=(10+Math.random()*78)+'%'; d.style.top=(10+Math.random()*78)+'%'; d.style.width='78px'; d.style.height='54px'; d.style.borderRadius='18px'; d.style.background=hazard?'linear-gradient(180deg,#ff657f,#af324b)':'linear-gradient(180deg,#47d7ff,#1d8fff)'; d.textContent=hazard?'â ':'TRASH'; d.onclick=()=>{ if(!active) return; d.remove(); if(hazard){hits++; $('clHits').textContent=hits; if(hits>cfg.hits){active=false; clearInterval(timer); clearInterval(spawner); retryCard('Too many hazards hit. Clean it up cleaner.', ()=>miniCleanup())}} else {score++; $('clScore').textContent=score; if(score>=cfg.goal){active=false; clearInterval(timer); clearInterval(spawner); markChallengeWin()}} };
+ field.appendChild(d); items.push(d); setTimeout(()=>{d.remove()},2400)}
+ for(let i=0;i<6;i++) setTimeout(spawn,i*250); spawner=setInterval(spawn,520); timer=setInterval(()=>{if(!active) return; left--; $('clTime').textContent=left; if(left<=0){active=false; clearInterval(timer); clearInterval(spawner); score>=cfg.goal?markChallengeWin():retryCard('Time ran out before the bayou got cleaned.', ()=>miniCleanup())}},1000); miniDisposer=()=>{active=false; clearInterval(timer); clearInterval(spawner)} }
+
+function miniTraffic(){const cfg=cfgFor('traffic'); let left=cfg.time,crashes=0,lane=1,active=true,raf; const lanes=[76,176,276],obs=[]; $('overlayContent').innerHTML=`${statCards([{label:'Survive',value:`<span id="tfTime">${left.toFixed(1)}</span>`,sub:'seconds left'},{label:'Crashes',value:`<span id="tfCrash">0</span> / ${cfg.crashes}`,sub:'Stay clean'}])}<canvas id="trafficCanvas" width="420" height="520" style="margin-top:12px;height:420px"></canvas><div class="btnRow" style="margin-top:12px"><button class="primary" id="trafL">Slide Left</button><button class="primary" id="trafR">Slide Right</button></div>`; const c=$('trafficCanvas'),ctx=c.getContext('2d'); $('trafL').onclick=()=>lane=Math.max(0,lane-1); $('trafR').onclick=()=>lane=Math.min(2,lane+1); c.onclick=e=>{const r=c.getBoundingClientRect(); if(e.clientX-r.left<r.width/2) lane=Math.max(0,lane-1); else lane=Math.min(2,lane+1)}; const spawn=setInterval(()=>obs.push({lane:Math.floor(Math.random()*3),y:-90,h:82+Math.random()*42}),380); function loop(){ if(!active) return; ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='#1b2434'; ctx.fillRect(48,0,324,520); ctx.strokeStyle='rgba(255,255,255,.16)'; ctx.setLineDash([20,18]); ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(156,0); ctx.lineTo(156,520); ctx.moveTo(264,0); ctx.lineTo(264,520); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle='#47d7ff'; ctx.fillRect(lanes[lane],404,68,92); obs.forEach(o=>{o.y+=7.2*cfg.speed; ctx.fillStyle='#ff657f'; ctx.fillRect(lanes[o.lane],o.y,68,o.h)}); for(let i=obs.length-1;i>=0;i--){const o=obs[i]; if(o.lane===lane && o.y+o.h>404 && o.y<496){ obs.splice(i,1); crashes++; $('tfCrash').textContent=crashes; if(crashes>cfg.crashes){active=false; clearInterval(spawn); cancelAnimationFrame(raf); retryCard('Traffic folded you up. Cleaner lane changes.', ()=>miniTraffic()); return}} else if(o.y>560){obs.splice(i,1)} }
+ left=Math.max(0,left-1/60); $('tfTime').textContent=left.toFixed(1); if(left<=0){active=false; clearInterval(spawn); markChallengeWin(); return} raf=requestAnimationFrame(loop) } loop(); miniDisposer=()=>{active=false; clearInterval(spawn); cancelAnimationFrame(raf)} }
+
+function cardDeck(){const suits=['â ','â¥','â¦','â£']; const vals=['A','2','3','4','5','6','7','8','9','10','J','Q','K']; return suits.flatMap(s=>vals.map(v=>({v,s}))).sort(()=>Math.random()-.5)}
+function handValue(hand){let total=0,aces=0; hand.forEach(c=>{if(c.v==='A'){aces++; total+=11}else if(['J','Q','K'].includes(c.v)) total+=10; else total+=+c.v}); while(total>21&&aces){total-=10;aces--} return total}
+function renderHand(el,hand){el.innerHTML=''; hand.forEach(c=>{const d=document.createElement('div'); d.className='playingCard'+((c.s==='â¥'||c.s==='â¦')?' red':''); d.textContent=c.v+c.s; el.appendChild(d)})}
+function miniBlackjack(){const cfg=cfgFor('blackjack'); let wins=0,losses=0,deck=[]; $('overlayContent').innerHTML=`${statCards([{label:'Wins',value:`<span id="bjW">0</span> / ${cfg.wins}`,sub:'Need to beat dealer'},{label:'Losses',value:`<span id="bjL">0</span> / ${cfg.losses}`,sub:'Stay under limit'}])}<div class="panel chrome center" style="margin-top:12px"><div class="tiny">Dealer</div><div class="cardHand" id="dealerHand" style="margin-top:10px"></div><div class="bigNum mono" id="dealerValue" style="font-size:1.4rem;margin-top:10px">0</div><div class="rule"></div><div class="tiny">You</div><div class="cardHand" id="playerHand" style="margin-top:10px"></div><div class="bigNum mono" id="playerValue" style="font-size:1.4rem;margin-top:10px">0</div><div class="btnRow" style="margin-top:16px"><button class="primary" id="bjHit">Hit</button><button class="gold" id="bjStand">Stand</button></div><div class="tiny" id="bjMsg" style="margin-top:12px">Win ${cfg.wins} hands before taking ${cfg.losses+1} losses.</div></div>`;
+ let dealer=[],player=[]; function deal(){ deck=deck.length<10?cardDeck():deck; dealer=[deck.pop(),deck.pop()]; player=[deck.pop(),deck.pop()]; refresh('Make the call.')} function refresh(msg=''){ renderHand($('dealerHand'),dealer); renderHand($('playerHand'),player); $('dealerValue').textContent=handValue(dealer); $('playerValue').textContent=handValue(player); $('bjMsg').textContent=msg } function endHand(outcome,msg){ if(outcome==='win') wins++; else if(outcome==='loss') losses++; $('bjW').textContent=wins; $('bjL').textContent=losses; if(wins>=cfg.wins){markChallengeWin(); return} if(losses>cfg.losses){retryCard('Table turned on you. Need cleaner hands.', ()=>miniBlackjack()); return} setTimeout(()=>{deal()},650); refresh(msg) }
+ $('bjHit').onclick=()=>{ player.push(deck.pop()); const pv=handValue(player); refresh(''); if(pv>21) endHand('loss','Bust. Dealer takes it.'); else refresh('Still live. Hit or stand.') };
+ $('bjStand').onclick=()=>{ while(handValue(dealer)<17) dealer.push(deck.pop()); const pv=handValue(player), dv=handValue(dealer); if(dv>21 || pv>dv) endHand('win','You leave the hand up.'); else if(pv===dv){ setTimeout(()=>deal(),650); refresh('Push. Run it again.')} else endHand('loss','Dealer got there first.') };
+ deal(); miniDisposer=()=>{} }
+
+function miniStreetBet(){const cfg=cfgFor('streetbet'); let bank=0,round=1,mult=1,active=true,interval,left=cfg.time; $('overlayContent').innerHTML=`${statCards([{label:'Banked',value:`<span id="sbBank">0</span> / ${cfg.goal}`,sub:'Across 3 rounds'},{label:'Round',value:`<span id="sbRound">1</span> / ${cfg.rounds}`,sub:'Use your nerve'},{label:'Multiplier',value:`x<span id="sbMult">1.00</span>`,sub:'Cash before bust'}])}<div class="panel chrome center" style="margin-top:12px"><div class="bigNum" id="sbStatus">Build it up.</div><div class="tiny" id="sbTime" style="margin-top:10px">${left.toFixed(1)}s left in round</div><div class="btnRow" style="margin-top:16px"><button class="hot" id="sbCash">Cash Out</button><button class="ghost" id="sbRide">Let It Ride</button></div></div>`; function startRound(){mult=1; left=cfg.time; $('sbRound').textContent=round; interval=setInterval(()=>{ if(!active) return; mult+=0.06+(round*.008); left=Math.max(0,left-.08); $('sbMult').textContent=mult.toFixed(2); $('sbTime').textContent=left.toFixed(1)+'s left in round'; const bustChance = mult<2?0.01:mult<3.5?0.025:mult<5?0.05:0.085; if(Math.random()<bustChance){ clearInterval(interval); if(round>=cfg.rounds){active=false; bank>=cfg.goal?markChallengeWin():retryCard('Bust got you before the total was there.', ()=>miniStreetBet())} else {round++; $('sbStatus').textContent='Busted. Next round.'; setTimeout(startRound,600)} } else if(left<=0){ clearInterval(interval); round++; if(round>cfg.rounds){ active=false; bank>=cfg.goal?markChallengeWin():retryCard('Round ended short. Needed a bigger bank.', ()=>miniStreetBet()) } else { $('sbStatus').textContent='Round expired. Next one.'; setTimeout(startRound,600) } } },80) }
+ $('sbCash').onclick=()=>{ if(!active) return; bank += Math.round(mult*24); $('sbBank').textContent=bank; $('sbStatus').textContent='Banked clean.'; clearInterval(interval); round++; if(round>cfg.rounds){active=false; bank>=cfg.goal?markChallengeWin():retryCard('Bank came up short. Needed more pressure.', ()=>miniStreetBet())} else setTimeout(startRound,500)}; $('sbRide').onclick=()=>{ $('sbStatus').textContent='Let it climb.'; }; startRound(); miniDisposer=()=>{active=false; clearInterval(interval)} }
+
+function miniNeonPulse(){const cfg=cfgFor('neonpulse'); let hits=0,total=0,good=0,ready=false,active=true,phase='wait',flashTimer,beatTimer; $('overlayContent').innerHTML=`${statCards([{label:'Hits',value:`<span id="npHits">0</span> / ${cfg.hits}`,sub:'Need solid timing'},{label:'Accuracy',value:`<span id="npAcc">100</span>%`,sub:`Need ${cfg.acc}%+`},{label:'State',value:`<span id="npState">Wait</span>`,sub:'Tap on flash'}])}<div class="panel chrome center" style="margin-top:12px"><div class="flashRing" id="npRing"><div class="bigNum" style="font-size:1.4rem">âª</div></div><div class="tiny" style="margin-top:14px">Tap only when the ring flashes.</div><button class="hot" id="npTap" style="margin-top:16px">Tap Beat</button></div>`; const ring=$('npRing'); function endFail(msg){active=false; clearTimeout(flashTimer); clearTimeout(beatTimer); retryCard(msg, ()=>miniNeonPulse())}
+ function schedule(){ if(!active) return; $('npState').textContent='Wait'; ring.classList.remove('ready'); ready=false; const wait=500+Math.random()*620; beatTimer=setTimeout(()=>{ if(!active) return; ready=true; phase='flash'; $('npState').textContent='FLASH'; ring.classList.add('ready'); const start=performance.now(); flashTimer=setTimeout(()=>{ if(!active) return; ready=false; ring.classList.remove('ready'); total++; $('npAcc').textContent=Math.round(total?good/total*100:100); if(hits>=cfg.hits && (good/Math.max(1,total))*100>=cfg.acc){active=false; markChallengeWin(); return} schedule(); }, cfg.good+30); ring.dataset.start=String(start); }, wait) }
+ $('npTap').onclick=()=>{ if(!active) return; const now=performance.now(); if(ready){ const delta=Math.abs(now-Number(ring.dataset.start||now)); total++; if(delta<=cfg.good){ good++; hits++; $('npHits').textContent=hits; $('npAcc').textContent=Math.round(good/total*100); ring.classList.remove('ready'); ready=false; clearTimeout(flashTimer); if(hits>=cfg.hits && (good/Math.max(1,total))*100>=cfg.acc){active=false; clearTimeout(beatTimer); markChallengeWin(); return} schedule(); } else { $('npState').textContent='Late'; total++; $('npAcc').textContent=Math.round(good/total*100); if((good/Math.max(1,total))*100 < Math.max(45,cfg.acc-28) && total>6) endFail('Beat timing drifted too far off.'); } } else { total++; $('npAcc').textContent=Math.round(good/total*100); $('npState').textContent='Early'; if((good/Math.max(1,total))*100 < Math.max(45,cfg.acc-28) && total>6) endFail('You jumped the beat too many times.') } };
+ schedule(); miniDisposer=()=>{active=false; clearTimeout(flashTimer); clearTimeout(beatTimer)} }
+
+function miniPortLoad(){const cfg=cfgFor('portload'); let score=0,mistakes=0,left=cfg.time,active=true,timer; const lanes=['RED','BLUE','GOLD']; let target=lanes[Math.floor(Math.random()*3)]; $('overlayContent').innerHTML=`${statCards([{label:'Loaded',value:`<span id="plScore">0</span> / ${cfg.goal}`,sub:'Correct placements'},{label:'Mistakes',value:`<span id="plMiss">0</span> / ${cfg.mistakes}`,sub:'Stay clean'},{label:'Time',value:`<span id="plTime">${left}</span>s`,sub:'Port moving'}])}<div class="panel chrome center" style="margin-top:12px"><div class="tiny">Current manifest</div><div class="bigNum" id="plTarget" style="font-size:1.8rem;margin-top:8px">${target}</div><div class="btnRow" style="margin-top:16px"><button class="primary" data-lane="RED">RED</button><button class="gold" data-lane="GOLD">GOLD</button></div><div class="btnRow" style="margin-top:10px"><button class="ghost" data-lane="BLUE">BLUE</button><button class="ghost" disabled>${cfg.mistakes-mistakes} miss buffer left</button></div></div>`; $('overlayContent').querySelectorAll('[data-lane]').forEach(btn=>btn.onclick=()=>{ if(!active) return; const chosen=btn.dataset.lane; if(chosen===target){ score++; $('plScore').textContent=score; if(score>=cfg.goal){active=false; clearInterval(timer); markChallengeWin(); return} target=lanes[Math.floor(Math.random()*3)]; $('plTarget').textContent=target; } else { mistakes++; $('plMiss').textContent=mistakes; if(mistakes>cfg.mistakes){ active=false; clearInterval(timer); retryCard('Manifest got sloppy. Need cleaner placements.', ()=>miniPortLoad()) } } }); timer=setInterval(()=>{ if(!active) return; left--; $('plTime').textContent=left; if(left<=0){active=false; clearInterval(timer); score>=cfg.goal?markChallengeWin():retryCard('Clock beat the port crew.', ()=>miniPortLoad())}},1000); miniDisposer=()=>{active=false; clearInterval(timer)} }
+
+function miniStorm(){const cfg=cfgFor('storm'); let left=cfg.time, stability=100, active=true, timer, spawner; const issues=[]; $('overlayContent').innerHTML=`${statCards([{label:'Stability',value:`<span id="stStab">100</span>`,sub:'Keep above zero'},{label:'Time',value:`<span id="stTime">${left.toFixed(1)}</span>`,sub:'Survive the surge'}])}<div class="panel chrome" style="margin-top:12px"><div class="tiny">City pressure</div><div class="progress" style="margin-top:12px"><span id="stBar" style="width:100%;background:linear-gradient(90deg,var(--red),var(--orange),var(--green))"></span></div><div class="issueGrid" id="stormIssues" style="margin-top:14px"></div></div>`; const grid=$('stormIssues'); function renderIssues(){grid.innerHTML=''; issues.forEach((it,idx)=>{const b=document.createElement('button'); b.className=it.type==='board'?'gold':it.type==='power'?'hot':'primary'; b.textContent=it.label; b.onclick=()=>{issues.splice(idx,1); renderIssues()}; grid.appendChild(b)}) }
+ function spawn(){ if(!active) return; if(issues.length<cfg.maxIssues){ const types=[['board','Board Windows'],['power','Power Reset'],['drop','Supply Drop']]; const t=types[Math.floor(Math.random()*types.length)]; issues.push({type:t[0],label:t[1]}); renderIssues(); } }
+ spawner=setInterval(spawn,cfg.spawn); for(let i=0;i<3;i++) setTimeout(spawn,i*280); timer=setInterval(()=>{ if(!active) return; left=Math.max(0,left-.1); stability -= cfg.drain*.1 + issues.length*.42; $('stTime').textContent=left.toFixed(1); $('stStab').textContent=Math.max(0,Math.round(stability)); $('stBar').style.width=Math.max(0,stability)+'%'; if(stability<=0){active=false; clearInterval(timer); clearInterval(spawner); retryCard('City pressure got away from you. Prioritize faster.', ()=>miniStorm())} else if(left<=0){active=false; clearInterval(timer); clearInterval(spawner); markChallengeWin()} },100); miniDisposer=()=>{active=false; clearInterval(timer); clearInterval(spawner)} }
+
+function miniRocket(){const cfg=cfgFor('rocket'); let round=0,active=true; $('overlayContent').innerHTML=`<div class="panel chrome center"><div class="bigNum">Rocket Assembly</div><div class="heroSub" style="max-width:100%;margin:12px auto 0">Remember the sequence, then tap it back clean.</div><div id="rocketStage" style="margin-top:16px"></div></div>`; const stage=$('rocketStage'); const labels=['A','B','C','D']; function runRound(){ if(!active) return; const len=cfg.seq[round]; const seq=Array.from({length:len},()=>labels[Math.floor(Math.random()*labels.length)]); let preview=0,input=[]; stage.innerHTML=`<div class="bigNum" style="font-size:1.4rem" id="rkShow">Watch</div><div class="choiceGrid" id="rkBtns" style="margin-top:16px"></div>`; const show=$('rkShow'); const btns=$('rkBtns'); labels.forEach(l=>{const b=document.createElement('button'); b.className='primary'; b.textContent=l; b.onclick=()=>{ if(preview<len) return; input.push(l); if(input[input.length-1]!==seq[input.length-1]){ active=false; retryCard('Sequence broke. Need cleaner memory.', ()=>miniRocket()) } else if(input.length===len){ round++; if(round>=cfg.seq.length){ active=false; markChallengeWin(); } else setTimeout(runRound,500) } }; btns.appendChild(b) }); function showNext(){ if(preview<len){ show.textContent=seq[preview]; preview++; setTimeout(showNext, Math.max(340, 640 - state.ng*70)); } else show.textContent='Your turn'; }
+ setTimeout(showNext,450) }
+ runRound(); miniDisposer=()=>{active=false} }
+
+function miniSkylineHop(goalOverride=null,nextFn=null){const cfg=cfgFor('skylinehop'); const goal=goalOverride||cfg.gates; let gates=0,active=true,raf,y=250,vy=0; const pipes=[]; $('overlayContent').innerHTML=`${statCards([{label:'Gates',value:`<span id="shGate">0</span> / ${goal}`,sub:'Need clean boosts'}])}<canvas id="shCanvas" width="420" height="520" style="margin-top:12px;height:420px"></canvas><button class="hot" id="shBoost" style="margin-top:12px">Boost Up</button>`; const c=$('shCanvas'), ctx=c.getContext('2d'); function flap(){vy=-5.9} $('shBoost').onclick=flap; c.onclick=flap; const spawn=setInterval(()=>pipes.push({x:440,gapY:120+Math.random()*240}),900/ cfg.speed); function loop(){ if(!active) return; ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='rgba(255,255,255,.03)'; ctx.fillRect(0,0,c.width,c.height); vy += .28; y += vy; ctx.fillStyle='#47d7ff'; ctx.fillRect(90,y,38,38); for(let i=pipes.length-1;i>=0;i--){ const p=pipes[i]; p.x -= 3.4*cfg.speed; ctx.fillStyle='#f2c060'; ctx.fillRect(p.x,0,48,p.gapY-cfg.gap/2); ctx.fillRect(p.x,p.gapY+cfg.gap/2,48,520-(p.gapY+cfg.gap/2)); if(p.x+48<90 && !p.scored){ p.scored=true; gates++; $('shGate').textContent=gates; if(gates>=goal){ active=false; clearInterval(spawn); if(nextFn) nextFn(); else markChallengeWin(); return } } const hit=90+38>p.x && 90<p.x+48 && (y<p.gapY-cfg.gap/2 || y+38>p.gapY+cfg.gap/2); if(hit||y<0||y+38>520){ active=false; clearInterval(spawn); retryCard('Skyline clipped you. Need cleaner boosts.', ()=>miniSkylineHop(goalOverride,nextFn)); return } if(p.x<-60) pipes.splice(i,1) } raf=requestAnimationFrame(loop) } loop(); miniDisposer=()=>{active=false; clearInterval(spawn); cancelAnimationFrame(raf)} }
+
+function miniEmpireNight(){const cfg=cfgFor('empirenight'); $('overlayContent').innerHTML=`<div class="panel chrome center"><div class="bigNum">Empire Night</div><div class="heroSub" style="max-width:100%;margin:12px auto 0">Five fast phases. One clean final run.</div><button class="hot" id="empireGo" style="margin-top:16px">Start Final Run</button></div>`; $('empireGo').onclick=()=>phaseTraffic(); function phaseTraffic(){openOverlay('Empire Night â¢ Traffic','Survive the opener.', false); const local={time:cfg.traffic,crashes:1,speed:1.26+state.ng*.08}; let left=local.time,crashes=0,lane=1,active=true,raf; const lanes=[76,176,276],obs=[]; $('overlayContent').innerHTML=`${statCards([{label:'Survive',value:`<span id="eT">${left.toFixed(1)}</span>`,sub:'seconds'},{label:'Crashes',value:`<span id="eC">0</span> / 1`,sub:'Clean reads'}])}<canvas id="eTraffic" width="420" height="520" style="margin-top:12px;height:400px"></canvas><div class="btnRow" style="margin-top:10px"><button class="primary" id="eL">Left</button><button class="primary" id="eR">Right</button></div>`; const c=$('eTraffic'),ctx=c.getContext('2d'); $('eL').onclick=()=>lane=Math.max(0,lane-1); $('eR').onclick=()=>lane=Math.min(2,lane+1); const spawn=setInterval(()=>obs.push({lane:Math.floor(Math.random()*3),y:-90,h:84}),360); function loop(){ if(!active) return; ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle='#1b2434'; ctx.fillRect(48,0,324,520); ctx.fillStyle='#47d7ff'; ctx.fillRect(lanes[lane],408,68,88); obs.forEach(o=>{o.y+=7.4*local.speed; ctx.fillStyle='#ff657f'; ctx.fillRect(lanes[o.lane],o.y,68,o.h)}); for(let i=obs.length-1;i>=0;i--){const o=obs[i]; if(o.lane===lane&&o.y+o.h>408&&o.y<496){obs.splice(i,1); crashes++; $('eC').textContent=crashes; if(crashes>1){active=false; clearInterval(spawn); cancelAnimationFrame(raf); retryCard('Empire opener folded you. Cleaner lane reads.', ()=>miniEmpireNight()); return}} else if(o.y>560) obs.splice(i,1)} left=Math.max(0,left-1/60); $('eT').textContent=left.toFixed(1); if(left<=0){active=false; clearInterval(spawn); phaseRhythm(); return} raf=requestAnimationFrame(loop)} loop(); miniDisposer=()=>{active=false; clearInterval(spawn); cancelAnimationFrame(raf)} }
+ function phaseRhythm(){openOverlay('Empire Night â¢ Rhythm','Hit the count.', false); let hits=0,active=true,ready=false,t1,t2; $('overlayContent').innerHTML=`<div class="panel chrome center"><div class="bigNum" id="erHits">0 / ${cfg.rhythm}</div><div class="flashRing" id="erRing" style="margin-top:14px"><div class="bigNum" style="font-size:1.2rem">âª</div></div><button class="hot" id="erTap" style="margin-top:16px">Tap Beat</button></div>`; const ring=$('erRing'); function sched(){if(!active) return; ring.classList.remove('ready'); ready=false; t1=setTimeout(()=>{ready=true; ring.classList.add('ready'); t2=setTimeout(()=>{ready=false; ring.classList.remove('ready'); if(active) sched();},180)},360)} $('erTap').onclick=()=>{if(!active) return; if(ready){hits++; $('erHits').textContent=`${hits} / ${cfg.rhythm}`; ready=false; ring.classList.remove('ready'); clearTimeout(t2); if(hits>=cfg.rhythm){active=false; phaseBet(); return} sched(); } else {active=false; retryCard('Beat timing slipped. Cleaner rhythm.', ()=>miniEmpireNight())}}; sched(); miniDisposer=()=>{active=false; clearTimeout(t1); clearTimeout(t2)} }
+ function phaseBet(){openOverlay('Empire Night â¢ Cash Out','Bank the target in one round.', false); let mult=1,active=true,intv; $('overlayContent').innerHTML=`<div class="panel chrome center"><div class="bigNum mono" id="ebVal">0 / ${cfg.bet}</div><div class="heroSub" style="max-width:100%;margin:12px auto 0">One shot. Get greedy and itâs gone.</div><button class="gold" id="ebCash" style="margin-top:18px">Cash Out</button></div>`; intv=setInterval(()=>{mult+=0.05; if(mult>4.4&&Math.random()<.08){active=false; clearInterval(intv); retryCard('You got greedy and busted. Need cleaner nerve.', ()=>miniEmpireNight())}},70); $('ebCash').onclick=()=>{if(!active)return; const bank=Math.round(mult*24); $('ebVal').textContent=`${bank} / ${cfg.bet}`; active=false; clearInterval(intv); if(bank>=cfg.bet) phaseHop(); else retryCard('Cash-out too early. Needed a bigger play.', ()=>miniEmpireNight())}; miniDisposer=()=>{active=false; clearInterval(intv)} }
+ function phaseHop(){openOverlay('Empire Night â¢ Skyline','Clear the final gates.', false); miniSkylineHop(cfg.hop, phaseTap) }
+ function phaseTap(){openOverlay('Empire Night â¢ Cashout','Mash it out.', false); let taps=0,left=cfg.tapTime,active=true,intv; $('overlayContent').innerHTML=`<div class="panel chrome center"><div class="bigNum mono" id="ecVal">0 / ${cfg.taps}</div><div class="tiny" id="ecTime" style="margin-top:10px">${left.toFixed(1)}s</div><button class="hot" id="ecTap" style="margin-top:16px;height:120px;font-size:1.2rem">TAP FAST</button></div>`; intv=setInterval(()=>{left=Math.max(0,left-.1); $('ecTime').textContent=left.toFixed(1)+'s'; if(left<=0 && active){active=false; clearInterval(intv); taps>=cfg.taps?markChallengeWin():retryCard('Final cashout came up short. Faster hands.', ()=>miniEmpireNight())}},100); $('ecTap').onclick=()=>{if(!active) return; taps++; $('ecVal').textContent=`${taps} / ${cfg.taps}`; if(taps>=cfg.taps){active=false; clearInterval(intv); markChallengeWin()}}; miniDisposer=()=>{active=false; clearInterval(intv)} }
+}
+
+function showCompletionPopup(){ if(!challengeCleared(11)) return; state.totalClears=Math.max(state.totalClears, state.ng+1); save(); const last=state.ng>=5; openOverlay(last?'Hustle Town Legend':'Hustle Town Crown Claimed','Choose whatâs next.'); $('overlayContent').innerHTML=`<div class="panel chrome center"><div class="bigNum">Congratulations</div><div class="heroSub" style="max-width:100%;margin:14px auto 0">${last?"You ran the city at its hardest and still came out on top. That ainât a hot streak. Thatâs you for real. From the block to the skyline, you stood on business the whole way through. Houston gonâ remember this one.":"You came up from the bottom, got your motion right, and ran Houston all the way up. From the bayou to the skyline, you stamped your name on the city. Real question is... you finna sit on that crown, or run it back and prove it wasnât luck?"}</div><div class="btnRow" style="margin-top:16px"><button class="primary" id="ccCont">Continue Current Game</button><button class="hot" id="ccNext">${last?'Start Fresh Run':`Start ${state.ng?`NG+${Math.min(5,state.ng+1)}`:'New Game Plus'}`}</button></div></div>`; $('ccCont').onclick=()=>closeOverlay(); $('ccNext').onclick=()=>{ closeOverlay(); if(last) resetRun(0,true); else resetRun(Math.min(5,state.ng+1)); } }
+
+function initWeather(){ fetch('https://api.open-meteo.com/v1/forecast?latitude=29.7604&longitude=-95.3698&current=temperature_2m,weather_code').then(r=>r.json()).then(d=>{ const code=d?.current?.weather_code; const temp=d?.current?.temperature_2m; let vibe='Clear Skies'; if([61,63,65,80,81,82].includes(code)) vibe='Rain Run'; else if([95,96,99].includes(code)) vibe='Storm Watch'; else if(typeof temp==='number' && temp>=32) vibe='Heat Check'; state.lastWeather=vibe; save(); renderHeader(); }).catch(()=>{}) }
+function startLoops(){ if(gameLoop) clearInterval(gameLoop); gameLoop=setInterval(()=>{ state.money += totalIncome()/10; save(); renderHeader(); if(activeTab==='home') { const tapBtn=$('tapZone'); if(tapBtn){ const strong=tapBtn.querySelector('strong'); if(strong) strong.textContent=fmt(tapValue()); } const cta=$('homeCTA'); if(cta){ const unlocked=challengeUnlocked(), cleared=challengeCleared(); cta.textContent=cleared?(state.currentDistrict===11?'Open End Choice':'Move to Next District'):unlocked?'Launch Challenge':'Go to Hustles'; } } },100)}
+showStartIfNeeded(); render(); startLoops(); initWeather();
+})();
+</script>
+</body>
+</html>
